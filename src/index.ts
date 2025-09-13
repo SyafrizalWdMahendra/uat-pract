@@ -11,17 +11,18 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const authenticateToken = require("./utils/token");
 
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", authRoutes);
-app.use("/api", projectRoutes);
-app.use("/api", featureRoutes);
-app.use("/api", scenarioRoutes);
-app.use("/api", feedbackRoutes);
-app.use("/api", feedHistoryRoutes);
+app.use("/api", authenticateToken, projectRoutes);
+app.use("/api", authenticateToken, featureRoutes);
+app.use("/api", authenticateToken, scenarioRoutes);
+app.use("/api", authenticateToken, feedbackRoutes);
+app.use("/api", authenticateToken, feedHistoryRoutes);
 
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error(err.stack);
