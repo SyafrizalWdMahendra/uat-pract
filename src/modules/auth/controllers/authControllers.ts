@@ -13,7 +13,6 @@ export const register = async (req: Request, res: Response) => {
 
     const { name, email, password, role } = registValidation;
 
-    // cek email sudah terdaftar
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
@@ -21,10 +20,8 @@ export const register = async (req: Request, res: Response) => {
       return responses(res, 409, "Email already registered");
     }
 
-    // hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // simpan user baru
     const newUser = await prisma.user.create({
       data: {
         name,
@@ -36,7 +33,7 @@ export const register = async (req: Request, res: Response) => {
         id: true,
         name: true,
         email: true,
-        role: true, // jangan return password
+        role: true,
       },
     });
 

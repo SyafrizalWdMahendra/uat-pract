@@ -1,8 +1,12 @@
 import { Router } from "express";
-import { searchFeedbackHistory } from "../modules/feedbacks/controllers/feedbackHistoryControllers";
+import {
+  searchFeedbackHistory,
+  getFeedbackHistory,
+} from "../modules/feedbacks/controllers/feedbackHistoryControllers";
 
 const router = Router();
 
 router.get("/feedback-history/search", searchFeedbackHistory);
+router.get("/feedback-history", getFeedbackHistory);
 
 export default router;

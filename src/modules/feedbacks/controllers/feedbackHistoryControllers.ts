@@ -85,4 +85,19 @@ const searchFeedbackHistory = async (req: Request, res: Response) => {
   }
 };
 
-export { searchFeedbackHistory };
+const getFeedbackHistory = async (req: Request, res: Response) => {
+  try {
+    const feedbackHistories = await prisma.feedbackHistory.findMany();
+    return responses(
+      res,
+      200,
+      "Feedback history successfully retrivied",
+      feedbackHistories
+    );
+  } catch (error) {
+    console.error("Feedback invalid retrivied");
+    return responses(res, 500, "Internal server error", error);
+  }
+};
+
+export { searchFeedbackHistory, getFeedbackHistory };

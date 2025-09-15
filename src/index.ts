@@ -7,6 +7,7 @@ import featureRoutes from "./routes/featureRoutes";
 import scenarioRoutes from "./routes/scenarioRoutes";
 import feedbackRoutes from "./routes/feedbackRoutes";
 import feedHistoryRoutes from "./routes/feedbackHistoryRoutes";
+import feedHistoryDetailRoutes from "./routes/feedbackHistoryDetailRoutes";
 dotenv.config();
 
 const app = express();
@@ -18,6 +19,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", authRoutes);
+app.use("/api", authenticateToken, feedHistoryDetailRoutes);
 app.use("/api", authenticateToken, projectRoutes);
 app.use("/api", authenticateToken, featureRoutes);
 app.use("/api", authenticateToken, scenarioRoutes);
