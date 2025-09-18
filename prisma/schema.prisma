@@ -37,8 +37,8 @@ model User {
   created_at        DateTime           @default(now())
   updated_at        DateTime           @updatedAt
 
-  managedProjects Project[] @relation("ManagedProjects")
-  ledTestProjects Project[] @relation("LedTestProjects")
+  managedProjects   Project[] @relation("ManagedProjects")
+  ledTestProjects   Project[] @relation("LedTestProjects")
   feedbacks         Feedback[]
   feedbackHistories FeedbackHistory[]
 }
@@ -93,16 +93,16 @@ model TestScenario {
 }
 
 model Feedback {
-  id              Int              @id @default(autoincrement())
-  user_id         Int
+  id               Int              @id @default(autoincrement())
+  user_id          Int
   test_scenario_id Int
-  description     String?
-  created_at      DateTime         @default(now())
-  updated_at      DateTime         @updatedAt
+  description      String?
+  created_at       DateTime         @default(now())
+  updated_at       DateTime         @updatedAt
 
-  user            User             @relation(fields: [user_id], references: [id])
-  testScenario    TestScenario     @relation(fields: [test_scenario_id], references: [id])
-  histories       FeedbackHistory[]
+  user             User             @relation(fields: [user_id], references: [id])
+  testScenario     TestScenario     @relation(fields: [test_scenario_id], references: [id])
+  histories        FeedbackHistory[]
 }
 
 model FeedbackHistory {

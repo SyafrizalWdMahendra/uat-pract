@@ -48,7 +48,13 @@ const searchFeedbackHistory = async (req: Request, res: Response) => {
       includeClause = {
         feedback: {
           include: {
-            user: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
+                role: true,
+              },
+            },
           },
         },
       };
@@ -85,19 +91,76 @@ const searchFeedbackHistory = async (req: Request, res: Response) => {
   }
 };
 
+const getFeedbackHistoryById = async (req: Request, res: Response) => {
+  try {
+    const feedbackId = Number(req.params.id);
+
+    const userFeedbacks = await prisma.feedbackHistory.findFirst({
+      where: {
+        id: feedbackId,
+      },
+      
+      select: {
+        status: true,
+
+        user: {
+          select: {
+            name: true,
+          },
+        },
+
+        feedback: {
+          select: {
+            description: true,
+            created_at: true,
+            testScenario: {
+              select: {
+                code: true,
+                feature: {
+                  select: {
+                    title: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!userFeedbacks) {
+      return responses(
+        res,
+        404,
+        "Riwayat feedback tidak ditemukan atau Anda tidak memiliki akses."
+      );
+    }
+
+    return responses(
+      res,
+      200,
+      "Data riwayat feedback berhasil diambil",
+      userFeedbacks
+    );
+  } catch (error) {
+    console.error("Gagal mengambil riwayat feedback:", error);
+    return responses(res, 500, "Internal Server Error");
+  }
+};
+
 const getFeedbackHistory = async (req: Request, res: Response) => {
   try {
     const feedbackHistories = await prisma.feedbackHistory.findMany();
     return responses(
       res,
       200,
-      "Feedback history successfully retrivied",
+      "Feedback Histories successfully retrivied",
       feedbackHistories
     );
   } catch (error) {
-    console.error("Feedback invalid retrivied");
-    return responses(res, 500, "Internal server error", error);
+    console.error("Invalid to retrivied feedback histories data", error);
+    return responses(res, 500, "Internal server error");
   }
 };
 
-export { searchFeedbackHistory, getFeedbackHistory };
+export { searchFeedbackHistory, getFeedbackHistoryById, getFeedbackHistory };

@@ -1,13 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import jwt, { JwtPayload } from "jsonwebtoken";
-
-declare global {
-  namespace Express {
-    interface Request {
-      user?: string | JwtPayload;
-    }
-  }
-}
+import jwt from "jsonwebtoken";
+import { CustomJwtPayload } from "../types/express";
 
 const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
   const secretKey = process.env.JWT_SECRET;
@@ -29,7 +22,7 @@ const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
       return res.status(403).send("Token tidak valid atau kedaluwarsa");
     }
 
-    req.user = user;
+    req.user = user as CustomJwtPayload;
     next();
   });
 };
