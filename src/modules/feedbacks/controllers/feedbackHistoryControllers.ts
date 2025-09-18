@@ -99,7 +99,7 @@ const getFeedbackHistoryById = async (req: Request, res: Response) => {
       where: {
         id: feedbackId,
       },
-      
+
       select: {
         status: true,
 
