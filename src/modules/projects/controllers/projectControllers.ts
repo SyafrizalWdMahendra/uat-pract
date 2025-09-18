@@ -15,20 +15,42 @@ const createProject = async (req: Request, res: Response) => {
       (due.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
     );
 
+    const { manager_id, test_lead_id, ...projectData } = parsed;
+
+    const [manager, testLead] = await Promise.all([
+      prisma.user.findUnique({ where: { id: manager_id } }),
+      prisma.user.findUnique({ where: { id: test_lead_id } }),
+    ]);
+
+    if (!manager || manager.role !== "manager") {
+      // Sesuaikan 'MANAGER' dengan nilai di database
+      return responses(
+        res,
+        400,
+        "Manager ID tidak valid atau bukan seorang Manager."
+      );
+    }
+
+    if (!testLead || testLead.role !== "test_lead") {
+      // Sesuaikan 'TEST_LEAD' dengan nilai di database
+      return responses(
+        res,
+        400,
+        "Test Lead ID tidak valid atau bukan seorang Test Lead."
+      );
+    }
+
     const projects = await prisma.project.create({
       data: {
-        user: {
-          connect: {
-            id: parsed.user_id,
-          },
-        },
-        title: parsed.title,
-        description: parsed.description,
-        priority: parsed.priority,
-        status: parsed.status,
+        manager: { connect: { id: manager.id } },
+        testLead: { connect: { id: testLead.id } },
+        title: projectData.title,
+        description: projectData.description,
+        priority: projectData.priority,
+        status: projectData.status,
         start_date: start,
         due_date: due,
-        duration,
+        duration: duration || null,
       },
     });
 
@@ -65,21 +87,41 @@ const updateProject = async (req: Request, res: Response) => {
       (due.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
     );
 
+    const { manager_id, test_lead_id, ...projectData } = parsed;
+
+    const [manager, testLead] = await Promise.all([
+      prisma.user.findUnique({ where: { id: manager_id } }),
+      prisma.user.findUnique({ where: { id: test_lead_id } }),
+    ]);
+
+    if (!manager || manager.role !== "manager") {
+      return responses(
+        res,
+        400,
+        "Manager ID tidak valid atau bukan seorang Manager."
+      );
+    }
+
+    if (!testLead || testLead.role !== "test_lead") {
+      return responses(
+        res,
+        400,
+        "Test Lead ID tidak valid atau bukan seorang Test Lead."
+      );
+    }
+
     const updatedProject = await prisma.project.update({
       where: { id: projectId },
       data: {
-        user: {
-          connect: {
-            id: parsed.user_id,
-          },
-        },
-        title: parsed.title,
-        description: parsed.description,
-        priority: parsed.priority,
-        status: parsed.status,
-        start_date: parsed.start_date,
-        due_date: parsed.due_date,
-        duration: duration,
+        manager: { connect: { id: manager.id } },
+        testLead: { connect: { id: testLead.id } },
+        title: projectData.title,
+        description: projectData.description,
+        priority: projectData.priority,
+        status: projectData.status,
+        start_date: start,
+        due_date: due,
+        duration: duration || null,
       },
     });
 
@@ -121,4 +163,67 @@ const deleteProject = async (req: Request, res: Response) => {
   }
 };
 
-export { createProject, getProject, updateProject, deleteProject };
+const getProjectInformation = async (req: Request, res: Response) => {
+  try {
+    const projectId = Number(req.params.id);
+
+    const project = await prisma.project.findUnique({
+      where: {
+        id: projectId,
+      },
+      include: {
+        manager: {
+          select: {
+            name: true,
+            role: true,
+          },
+        },
+        testLead: {
+          select: {
+            name: true,
+            role: true,
+          },
+        },
+        features: {
+          include: {
+            testScenarios: true,
+          },
+        },
+      },
+    });
+
+    if (!project) {
+      return responses(res, 404, "Project not found");
+    }
+
+    const featureCount = project.features.length;
+
+    const testScenarioCount = project.features.reduce(
+      (total: number, feature: { testScenarios: any[] }) => {
+        return total + feature.testScenarios.length;
+      },
+      0
+    );
+
+    const { features, ...projectData } = project;
+
+    const responseData = {
+      ...projectData,
+      featureCount,
+      testScenarioCount,
+    };
+
+    return responses(res, 200, "Project successfully retrieved", responseData);
+  } catch (error) {
+    console.error("Failed to get project:", error);
+    return responses(res, 500, "Internal server error");
+  }
+};
+
+export {
+  createProject,
+  getProject,
+  updateProject,
+  deleteProject,
+  getProjectInformation,
+};

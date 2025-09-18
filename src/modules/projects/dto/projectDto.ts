@@ -5,14 +5,8 @@ const StatusEnum = z.enum(["active", "completed", "pending"]);
 
 export const projectSchema = z
   .object({
-    user_id: z
-      .number()
-      .refine((val) => val !== undefined, {
-        message: "Password is required",
-      })
-      .refine((val) => typeof val === "number", {
-        message: "Password must be a number",
-      }),
+    manager_id: z.number(),
+    test_lead_id: z.number(),
     title: z
       .string()
       .refine((val) => val !== undefined, {
@@ -30,6 +24,7 @@ export const projectSchema = z
     due_date: z.string().refine((val) => !isNaN(Date.parse(val)), {
       message: "Due date tidak valid",
     }),
+    duration: z.string().optional(),
   })
   .refine((data) => new Date(data.due_date) >= new Date(data.start_date), {
     message: "Due date tidak boleh lebih awal dari start date",
