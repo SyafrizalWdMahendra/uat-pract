@@ -3,13 +3,12 @@
 ## 📦 Requirements
 - **Node.js** >= 20.x
 - **npm** >= 10.x (sudah include di Node.js)
-
 ---
 
 ## 🔧 Installation Steps
 
 ### 1. Clone Repository
-git clone https://github.com/SyafrizalWdMahendra/uat-pract
+git clone https://github.com/SyafrizalWdMahendra/uat-pract.git
 cd repo-name
 npm install
 Buat file .env di root project / copy dari example (.env.sample)
