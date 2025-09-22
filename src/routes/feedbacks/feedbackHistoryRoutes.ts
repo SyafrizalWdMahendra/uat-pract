@@ -3,7 +3,7 @@ import {
   searchFeedbackHistory,
   getFeedbackHistory,
   getFeedbackHistoryById,
-} from "../modules/feedbacks/controllers/feedbackHistoryControllers";
+} from "../../modules/feedbacks/controllers/feedbackHistoryControllers";
 
 const router = Router();
 

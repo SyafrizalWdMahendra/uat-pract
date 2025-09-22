@@ -4,7 +4,7 @@ import {
   deleteScenarios,
   getScenarios,
   updateScenarios,
-} from "../modules/scenarios/controllers/scenarioControllers";
+} from "../../modules/scenarios/controllers/scenarioControllers";
 
 const router = Router();
 

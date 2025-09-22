@@ -1,14 +1,14 @@
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import authRoutes from "./routes/authRoutes";
-import projectRoutes from "./routes/projectRoutes";
-import featureRoutes from "./routes/featureRoutes";
-import scenarioRoutes from "./routes/scenarioRoutes";
-import feedbackRoutes from "./routes/feedbackRoutes";
-import feedHistoryRoutes from "./routes/feedbackHistoryRoutes";
-import feedHistoryDetailRoutes from "./routes/feedbackHistoryDetailRoutes";
-import statisticRoutes from "./routes/statisticRoutes";
+import authRoutes from "./routes/auth/authRoutes";
+import projectRoutes from "./routes/projects/projectRoutes";
+import featureRoutes from "./routes/features/featureRoutes";
+import scenarioRoutes from "./routes/scenarios/scenarioRoutes";
+import feedbackRoutes from "./routes/feedbacks/feedbackRoutes";
+import feedHistoryRoutes from "./routes/feedbacks/feedbackHistoryRoutes";
+import feedHistoryDetailRoutes from "./routes/feedbacks/feedbackHistoryDetailRoutes";
+import statisticRoutes from "./routes/dashboards/statisticRoutes";
 dotenv.config();
 
 const app = express();
