@@ -163,4 +163,46 @@ const getFeedbackHistory = async (req: Request, res: Response) => {
   }
 };
 
-export { searchFeedbackHistory, getFeedbackHistoryById, getFeedbackHistory };
+const deleteFeedbackHistory = async (req: Request, res: Response) => {
+  try {
+    const feedHistoryId = Number(req.params.id);
+    if (isNaN(feedHistoryId)) {
+      return responses(res, 400, "Invalid feedback history ID");
+    }
+
+    const existingFeedHistory = await prisma.feedbackHistory.findUnique({
+      where: { id: feedHistoryId },
+    });
+
+    if (!existingFeedHistory) {
+      return responses(res, 404, "Feedback history not found!");
+    }
+
+    const feedbackIdToDelete = existingFeedHistory.feedback_id;
+
+    await prisma.$transaction([
+      prisma.feedbackHistory.delete({
+        where: { id: feedHistoryId },
+      }),
+      prisma.feedback.delete({
+        where: { id: feedbackIdToDelete },
+      }),
+    ]);
+
+    return responses(
+      res,
+      200,
+      "Feedback History and related Feedback successfully deleted"
+    );
+  } catch (error) {
+    console.error("Delete feedback history error:", error);
+    return responses(res, 500, "Internal server error", String(error));
+  }
+};
+
+export {
+  searchFeedbackHistory,
+  getFeedbackHistoryById,
+  getFeedbackHistory,
+  deleteFeedbackHistory,
+};
