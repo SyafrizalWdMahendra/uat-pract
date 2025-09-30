@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { scenarioSchema } from "../dto/scenarioDto";
 import z from "zod";
+import { create } from "domain";
 const responses = require("../../../utils/responses");
 const prisma = require("../../../prisma/client");
 
@@ -33,7 +34,18 @@ const createScenarios = async (req: Request, res: Response) => {
 
 const getScenarios = async (req: Request, res: Response) => {
   try {
-    const scenarios = await prisma.testScenario.findMany();
+    const scenarios = await prisma.testScenario.findMany({
+      select: {
+        id: true,
+        feature_id: true,
+        code: true,
+        title: true,
+        status: true,
+        type: true,
+        created_at: true,
+        updated_at: true,
+      },
+    });
     return responses(res, 200, "Scenario successfully retrivied", scenarios);
   } catch (error) {
     console.error("Get scenario error:", error);

@@ -50,7 +50,7 @@ const createProject = async (req: Request, res: Response) => {
         status: projectData.status,
         start_date: start,
         due_date: due,
-        duration: duration || null,
+        duration: Number(duration) || null,
       },
     });
 

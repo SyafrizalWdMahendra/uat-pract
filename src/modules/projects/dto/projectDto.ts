@@ -24,7 +24,7 @@ export const projectSchema = z
     due_date: z.string().refine((val) => !isNaN(Date.parse(val)), {
       message: "Due date tidak valid",
     }),
-    duration: z.string().optional(),
+    duration: z.number().optional(),
   })
   .refine((data) => new Date(data.due_date) >= new Date(data.start_date), {
     message: "Due date tidak boleh lebih awal dari start date",
