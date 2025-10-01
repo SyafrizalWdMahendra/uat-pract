@@ -1,53 +1,26 @@
 import { feedbackSchema } from "../dto/feedbackDto";
 import { Request, Response } from "express";
-import { feedbackHistoryScehma } from "../dto/feedbackHistoryDto";
 const prisma = require("../../../prisma/client");
 const responses = require("../../../utils/responses");
 
 const createFeedback = async (req: Request, res: Response) => {
   try {
     const feedbackValidation = feedbackSchema.parse(req.body);
-    const feedHistoryValidation = feedbackHistoryScehma.parse(req.body);
 
     const createdFeedback = await prisma.feedback.create({
       data: {
         user_id: feedbackValidation.user_id,
         test_scenario_id: feedbackValidation.test_scenario_id,
+        project_id: feedbackValidation.project_id,
+        feature_id: feedbackValidation.feature_id,
         description: feedbackValidation.description,
-      },
-    });
-
-    const testScenario = await prisma.testScenario.findUnique({
-      where: { id: feedbackValidation.test_scenario_id },
-      select: { feature_id: true },
-    });
-
-    if (!testScenario) {
-      throw new Error("Test scenario not found");
-    }
-
-    const feature = await prisma.feature.findUnique({
-      where: { id: testScenario.feature_id },
-      select: { project_id: true },
-    });
-
-    if (!feature) {
-      throw new Error("Feature not found");
-    }
-
-    const createdHistory = await prisma.feedbackHistory.create({
-      data: {
-        feedback_id: createdFeedback.id,
-        user_id: feedbackValidation.user_id,
-        project_id: feature.project_id,
-        status: feedHistoryValidation.status,
-        notes: feedHistoryValidation.notes || null,
+        priority: feedbackValidation.priority,
+        status: feedbackValidation.status,
       },
     });
 
     return responses(res, 201, "Feedback successfully created", {
       createdFeedback,
-      createdHistory,
     });
   } catch (error) {
     console.error("Create feedback error:", error);

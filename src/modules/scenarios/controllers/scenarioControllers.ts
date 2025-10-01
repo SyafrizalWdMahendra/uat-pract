@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import { scenarioSchema } from "../dto/scenarioDto";
 import z from "zod";
-import { create } from "domain";
 const responses = require("../../../utils/responses");
 const prisma = require("../../../prisma/client");
 
@@ -12,12 +11,7 @@ const createScenarios = async (req: Request, res: Response) => {
       data: {
         feature_id: scenarioValidation.feature_id,
         code: scenarioValidation.code,
-        title: scenarioValidation.title,
-        expected_result: scenarioValidation.expected_result,
-        actual_result: scenarioValidation.actual_result,
-        description: scenarioValidation.description,
-        status: scenarioValidation.status,
-        type: scenarioValidation.type,
+        test_case: scenarioValidation.test_case,
       },
     });
 
@@ -39,11 +33,7 @@ const getScenarios = async (req: Request, res: Response) => {
         id: true,
         feature_id: true,
         code: true,
-        title: true,
-        status: true,
-        type: true,
-        created_at: true,
-        updated_at: true,
+        test_case: true,
       },
     });
     return responses(res, 200, "Scenario successfully retrivied", scenarios);
@@ -65,12 +55,7 @@ const updateScenarios = async (req: Request, res: Response) => {
       data: {
         feature_id: scenarioValidation.feature_id,
         code: scenarioValidation.code,
-        title: scenarioValidation.title,
-        expected_result: scenarioValidation.expected_result,
-        actual_result: scenarioValidation.actual_result,
-        description: scenarioValidation.description,
-        status: scenarioValidation.status,
-        type: scenarioValidation.type,
+        test_case: scenarioValidation.test_case,
       },
     });
 

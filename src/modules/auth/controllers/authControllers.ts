@@ -53,8 +53,9 @@ export const login = async (req: Request, res: Response) => {
     const user = await prisma.user.findUnique({
       where: { email },
     });
+    
     if (!user) {
-      return responses(res, 401, "Email atau password salah");
+      return responses(res, 404, "Pengguna tidak ditemukan");
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);

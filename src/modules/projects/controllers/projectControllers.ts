@@ -5,6 +5,21 @@ import z from "zod";
 const prisma = require("../../../prisma/client");
 const responses = require("../../../utils/responses");
 
+const formatDate = (date: Date | null): string | null => {
+  if (!date) return null;
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return null;
+
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
+interface FeatureWithScenarios {
+  testScenarios: unknown[];
+}
+
 const createProject = async (req: Request, res: Response) => {
   try {
     const parsed = projectSchema.parse(req.body);
@@ -168,26 +183,22 @@ const getProjectInformation = async (req: Request, res: Response) => {
     const projectId = Number(req.params.id);
 
     const project = await prisma.project.findUnique({
-      where: {
-        id: projectId,
-      },
-      include: {
-        manager: {
-          select: {
-            name: true,
-            role: true,
-          },
-        },
-        testLead: {
-          select: {
-            name: true,
-            role: true,
-          },
-        },
+      where: { id: projectId },
+      select: {
+        id: true,
+        manager_id: true,
+        test_lead_id: true,
+        title: true,
+        description: true,
+        priority: true,
+        status: true,
+        start_date: true,
+        due_date: true,
+        duration: true,
+        manager: { select: { name: true, role: true } },
+        testLead: { select: { name: true, role: true } },
         features: {
-          include: {
-            testScenarios: true,
-          },
+          include: { testScenarios: true },
         },
       },
     });
@@ -196,16 +207,20 @@ const getProjectInformation = async (req: Request, res: Response) => {
       return responses(res, 404, "Project not found");
     }
 
-    const featureCount = project.features.length;
+    const formattedProject = {
+      ...project,
+      start_date: formatDate(project.start_date),
+      due_date: formatDate(project.due_date),
+    };
 
+    const featureCount = project.features.length;
     const testScenarioCount = project.features.reduce(
-      (total: number, feature: { testScenarios: any[] }) => {
-        return total + feature.testScenarios.length;
-      },
+      (total: number, feature: FeatureWithScenarios) =>
+        total + feature.testScenarios.length,
       0
     );
 
-    const { features, ...projectData } = project;
+    const { features, ...projectData } = formattedProject;
 
     const responseData = {
       ...projectData,

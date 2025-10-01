@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import test from "node:test";
 const responses = require("../../../utils/responses");
 const prisma = require("../../../prisma/client");
 
@@ -7,54 +8,82 @@ const searchFeedbackHistory = async (req: Request, res: Response) => {
     const { content, feature, author } = req.query;
 
     let whereClause = {};
-    let includeClause = {};
+    let selectClause = {};
 
     if (content) {
       whereClause = {
-        feedback: {
-          description: { contains: String(content) },
+        description: { contains: String(content) },
+      };
+      selectClause = {
+        description: true,
+        created_at: true,
+        priority: true,
+        status: true,
+        feature: {
+          select: {
+            title: true,
+          },
         },
-      };
-      includeClause = {
-        feedback: true,
-      };
-    } else if (feature) {
-      whereClause = {
-        feedback: {
-          testScenario: {
-            feature: {
-              title: { contains: String(feature) },
-            },
+        testScenario: {
+          select: {
+            code: true,
+          },
+        },
+        user: {
+          select: {
+            name: true,
           },
         },
       };
-      includeClause = {
-        feedback: {
-          include: {
-            testScenario: {
-              include: {
-                feature: true,
-              },
-            },
+    } else if (feature) {
+      whereClause = {
+        feature: {
+          title: { contains: String(feature) },
+        },
+      };
+      selectClause = {
+        description: true,
+        created_at: true,
+        priority: true,
+        status: true,
+        feature: {
+          select: {
+            title: true,
+          },
+        },
+        testScenario: {
+          select: {
+            code: true,
+          },
+        },
+        user: {
+          select: {
+            name: true,
           },
         },
       };
     } else if (author) {
       whereClause = {
-        feedback: {
-          user: { name: { contains: String(author) } },
-        },
+        user: { name: { contains: String(author) } },
       };
-      includeClause = {
-        feedback: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                role: true,
-              },
-            },
+      selectClause = {
+        description: true,
+        created_at: true,
+        priority: true,
+        status: true,
+        feature: {
+          select: {
+            title: true,
+          },
+        },
+        testScenario: {
+          select: {
+            code: true,
+          },
+        },
+        user: {
+          select: {
+            name: true,
           },
         },
       };
@@ -66,9 +95,9 @@ const searchFeedbackHistory = async (req: Request, res: Response) => {
       );
     }
 
-    const searchResult = await prisma.feedbackHistory.findMany({
+    const searchResult = await prisma.feedback.findMany({
       where: whereClause,
-      include: includeClause,
+      select: selectClause,
     });
 
     if (searchResult.length === 0) {
@@ -95,34 +124,29 @@ const getFeedbackHistoryById = async (req: Request, res: Response) => {
   try {
     const feedbackId = Number(req.params.id);
 
-    const userFeedbacks = await prisma.feedbackHistory.findFirst({
+    const userFeedbacks = await prisma.feedback.findFirst({
       where: {
         id: feedbackId,
       },
 
       select: {
         status: true,
-
+        priority: true,
+        description: true,
+        created_at: true,
         user: {
           select: {
             name: true,
           },
         },
-
-        feedback: {
+        testScenario: {
           select: {
-            description: true,
-            created_at: true,
-            testScenario: {
-              select: {
-                code: true,
-                feature: {
-                  select: {
-                    title: true,
-                  },
-                },
-              },
-            },
+            code: true,
+          },
+        },
+        feature: {
+          select: {
+            title: true,
           },
         },
       },
@@ -150,7 +174,30 @@ const getFeedbackHistoryById = async (req: Request, res: Response) => {
 
 const getFeedbackHistory = async (req: Request, res: Response) => {
   try {
-    const feedbackHistories = await prisma.feedbackHistory.findMany();
+    const feedbackHistories = await prisma.feedback.findMany({
+      select: {
+        status: true,
+        priority: true,
+        description: true,
+        created_at: true,
+        user: {
+          select: {
+            name: true,
+          },
+        },
+        testScenario: {
+          select: {
+            code: true,
+          },
+        },
+        feature: {
+          select: {
+            title: true,
+          },
+        },
+      },
+    });
+
     return responses(
       res,
       200,
@@ -170,7 +217,7 @@ const deleteFeedbackHistory = async (req: Request, res: Response) => {
       return responses(res, 400, "Invalid feedback history ID");
     }
 
-    const existingFeedHistory = await prisma.feedbackHistory.findUnique({
+    const existingFeedHistory = await prisma.feedback.findUnique({
       where: { id: feedHistoryId },
     });
 
@@ -178,16 +225,9 @@ const deleteFeedbackHistory = async (req: Request, res: Response) => {
       return responses(res, 404, "Feedback history not found!");
     }
 
-    const feedbackIdToDelete = existingFeedHistory.feedback_id;
-
-    await prisma.$transaction([
-      prisma.feedbackHistory.delete({
-        where: { id: feedHistoryId },
-      }),
-      prisma.feedback.delete({
-        where: { id: feedbackIdToDelete },
-      }),
-    ]);
+    await prisma.feedback.delete({
+      where: { id: feedHistoryId },
+    });
 
     return responses(
       res,

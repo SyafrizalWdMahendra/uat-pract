@@ -1,9 +1,4 @@
 import { Request, Response } from "express";
-import { feedbackHistoryScehma } from "../dto/feedbackHistoryDto";
-import { feedbackSchema } from "../dto/feedbackDto";
-import { scenarioSchema } from "../../scenarios/dto/scenarioDto";
-import { projectSchema } from "../../projects/dto/projectDto";
-import { featureSchema } from "../../features/dto/featureDto";
 import z from "zod";
 import { updateDetailsSchema } from "../dto/feedbackDetailUpdateDto";
 const prisma = require("../../../prisma/client");
@@ -12,8 +7,36 @@ const responses = require("../../../utils/responses");
 const getFeedHistoryDetails = async (req: Request, res: Response) => {
   try {
     const feedHistoryId = Number(req.params.id);
-    const feedHistories = await prisma.feedbackHistory.findUnique({
+    const feedHistories = await prisma.feedback.findUnique({
       where: { id: feedHistoryId },
+      select: {
+        id: true,
+        user_id: true,
+        test_scenario_id: true,
+        feature_id: true,
+        project_id: true,
+        description: true,
+        status: true,
+        priority: true,
+        created_at: true,
+        updated_at: true,
+        user: {
+          select: {
+            name: true,
+          },
+        },
+        testScenario: {
+          select: {
+            code: true,
+            test_case: true,
+          },
+        },
+        feature: {
+          select: {
+            title: true,
+          },
+        },
+      },
     });
     if (!feedHistories) {
       return responses(res, 404, "Feedback not found!");
@@ -41,22 +64,17 @@ const updateFeedHistoryDetails = async (req: Request, res: Response) => {
 
     const result = await prisma.$transaction(
       async (tx: {
-        feedbackHistory: {
+        feedback: {
           findUniqueOrThrow: (arg0: {
             where: { id: number };
             select: {
-              feedback: {
+              testScenario: {
                 select: {
                   id: boolean;
-                  testScenario: {
+                  feature: {
                     select: {
                       id: boolean;
-                      feature: {
-                        select: {
-                          id: boolean;
-                          project_id: boolean;
-                        };
-                      };
+                      project_id: boolean;
                     };
                   };
                 };
@@ -64,14 +82,8 @@ const updateFeedHistoryDetails = async (req: Request, res: Response) => {
             };
           }) => any;
           update: (arg0: {
-            where: { id: number };
-            data: { status: string };
-          }) => any;
-        };
-        feedback: {
-          update: (arg0: {
-            where: { id: any };
-            data: { description: string };
+            where: { id: number | any };
+            data: { description: string; status?: string };
           }) => any;
         };
         testScenario: {
@@ -91,21 +103,16 @@ const updateFeedHistoryDetails = async (req: Request, res: Response) => {
         };
       }) => {
         // Langkah 1: Dapatkan semua ID relasi dalam satu query
-        const relations = await tx.feedbackHistory.findUniqueOrThrow({
+        const relations = await tx.feedback.findUniqueOrThrow({
           where: { id: feedbackHistoryId },
           select: {
-            feedback: {
+            testScenario: {
               select: {
-                id: true, // ID dari tabel Feedback
-                testScenario: {
+                id: true, // ID dari tabel TestScenario
+                feature: {
                   select: {
-                    id: true, // ID dari tabel TestScenario
-                    feature: {
-                      select: {
-                        id: true, // ID dari tabel Feature
-                        project_id: true, // ID dari tabel Project
-                      },
-                    },
+                    id: true, // ID dari tabel Feature
+                    project_id: true, // ID dari tabel Project
                   },
                 },
               },
@@ -114,22 +121,13 @@ const updateFeedHistoryDetails = async (req: Request, res: Response) => {
         });
 
         // Ekstrak semua ID agar lebih mudah dibaca
-        const feedbackId = relations.feedback?.id;
-        const testScenarioId = relations.feedback?.testScenario?.id;
-        const featureId = relations.feedback?.testScenario?.feature?.id;
-        const projectId = relations.feedback?.testScenario?.feature?.project_id;
+        const testScenarioId = relations.testScenario?.id;
+        const featureId = relations.testScenario?.feature?.id;
+        const projectId = relations.testScenario?.feature?.project_id;
 
-        // Langkah 2: Lakukan semua update secara kondisional
-        if (body.status) {
-          await tx.feedbackHistory.update({
-            where: { id: feedbackHistoryId },
-            data: { status: body.status },
-          });
-        }
-
-        if (body.feedback_content && feedbackId) {
+        if (body.feedback_content) {
           await tx.feedback.update({
-            where: { id: feedbackId },
+            where: { id: feedbackHistoryId },
             data: { description: body.feedback_content },
           });
         }
