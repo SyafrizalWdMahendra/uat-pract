@@ -115,5 +115,3 @@ Project ini dikembangkan untuk keperluan internal dan pembelajaran di bawah supe
 Tidak untuk distribusi publik tanpa izin resmi.
 
 ---
-
-Apakah kamu ingin saya tambahkan juga **section "Contributing Guide" dan "Common Troubleshooting"** biar lebih lengkap seperti README standar tim developer CMLABS?
