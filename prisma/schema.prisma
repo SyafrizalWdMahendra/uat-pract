@@ -14,62 +14,62 @@ datasource db {
 }
 
 model User {
-  id                Int                @id @default(autoincrement())
-  name              String
-  email             String             @unique
-  password          String
-  role              Role
-  created_at        DateTime           @default(now())
-  updated_at        DateTime           @updatedAt
+  id         Int      @id @default(autoincrement())
+  name       String
+  email      String   @unique
+  password   String
+  role       Role
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
-  managedProjects   Project[] @relation("ManagedProjects")
-  ledTestProjects   Project[] @relation("LedTestProjects")
-  feedbacks         Feedback[]
+  managedProjects Project[]  @relation("ManagedProjects")
+  ledTestProjects Project[]  @relation("LedTestProjects")
+  feedbacks       Feedback[]
 }
 
 model Project {
-  id                Int               @id @default(autoincrement())
-  manager_id        Int
-  test_lead_id      Int
-  title             String
-  description       String?
-  priority          ProjectPriority
-  status            ProjectStatus
-  start_date        DateTime
-  due_date          DateTime
-  duration          Int?
-  created_at        DateTime          @default(now())
-  updated_at        DateTime          @updatedAt
+  id           Int             @id @default(autoincrement())
+  manager_id   Int
+  test_lead_id Int
+  title        String
+  description  String?
+  priority     ProjectPriority
+  status       ProjectStatus
+  start_date   DateTime
+  due_date     DateTime
+  duration     Int?
+  created_at   DateTime        @default(now())
+  updated_at   DateTime        @updatedAt
 
-  manager           User              @relation("ManagedProjects", fields: [manager_id], references: [id])
-  testLead          User              @relation("LedTestProjects", fields: [test_lead_id], references: [id])
+  manager  User @relation("ManagedProjects", fields: [manager_id], references: [id])
+  testLead User @relation("LedTestProjects", fields: [test_lead_id], references: [id])
 
-  features          Feature[]
-  feedbacks      Feedback[]
+  features  Feature[]
+  feedbacks Feedback[]
 }
 
 model Feature {
-  id           Int            @id @default(autoincrement())
-  project_id   Int
-  title        String
-  created_at   DateTime       @default(now())
-  updated_at   DateTime       @updatedAt
+  id         Int      @id @default(autoincrement())
+  project_id Int
+  title      String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
-  project      Project        @relation(fields: [project_id], references: [id])
+  project       Project        @relation(fields: [project_id], references: [id])
   testScenarios TestScenario[]
-  feedbacks      Feedback[]
+  feedbacks     Feedback[]
 }
 
 model TestScenario {
-  id             Int                @id @default(autoincrement())
-  feature_id     Int?
-  code           String?            @unique
-  test_case      String
-  created_at     DateTime           @default(now())
-  updated_at     DateTime           @updatedAt
+  id         Int      @id @default(autoincrement())
+  feature_id Int?
+  code       String?  @unique
+  test_case  String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
-  feature        Feature?           @relation(fields: [feature_id], references: [id])
-  feedbacks      Feedback[]
+  feature   Feature?   @relation(fields: [feature_id], references: [id])
+  feedbacks Feedback[]
 }
 
 model Feedback {
@@ -84,10 +84,10 @@ model Feedback {
   created_at       DateTime         @default(now())
   updated_at       DateTime         @updatedAt
 
-  user             User             @relation(fields: [user_id], references: [id])
-  testScenario     TestScenario     @relation(fields: [test_scenario_id], references: [id])
-  feature          Feature          @relation(fields: [feature_id], references: [id])
-  project          Project          @relation(fields: [project_id], references: [id])
+  user         User         @relation(fields: [user_id], references: [id])
+  testScenario TestScenario @relation(fields: [test_scenario_id], references: [id])
+  feature      Feature      @relation(fields: [feature_id], references: [id])
+  project      Project      @relation(fields: [project_id], references: [id])
 }
 
 enum Role {
@@ -122,13 +122,6 @@ enum TestScenarioType {
   global
   feature
 }
-
-// enum FeedbackHistoryStatus {
-//   open
-//   in_progress
-//   resolved
-//   closed
-// }
 
 enum FeedbackPriority {
   low
