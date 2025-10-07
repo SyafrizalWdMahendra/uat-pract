@@ -3,9 +3,8 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { registerSchema } from "../dto/registDto";
 import { loginSchema } from "../dto/loginDto";
-
-const prisma = require("../../../prisma/client");
-const responses = require("../../../utils/responses");
+import { responses } from "../../../utils/responses";
+import { prisma } from "../../../prisma/client";
 
 export const register = async (req: Request, res: Response) => {
   try {
@@ -17,7 +16,7 @@ export const register = async (req: Request, res: Response) => {
       where: { email },
     });
     if (existingUser) {
-      return responses(res, 409, "Email already registered");
+      return responses(res, 409, "Email already registered", null);
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -40,7 +39,7 @@ export const register = async (req: Request, res: Response) => {
     return responses(res, 201, "User successfully registered", newUser);
   } catch (error) {
     console.error("Register error:", error);
-    return responses(res, 500, "Internal server error");
+    return responses(res, 500, "Internal server error", null);
   }
 };
 
@@ -53,14 +52,14 @@ export const login = async (req: Request, res: Response) => {
     const user = await prisma.user.findUnique({
       where: { email },
     });
-    
+
     if (!user) {
-      return responses(res, 404, "Pengguna tidak ditemukan");
+      return responses(res, 404, "Pengguna tidak ditemukan", null);
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return responses(res, 401, "Email atau password salah");
+      return responses(res, 401, "Email atau password salah", null);
     }
 
     const tokenPayload = {
@@ -77,6 +76,6 @@ export const login = async (req: Request, res: Response) => {
     return responses(res, 200, "Login berhasil", { token });
   } catch (error) {
     console.error("Login error:", error);
-    return responses(res, 500, "Terjadi kesalahan pada server");
+    return responses(res, 500, "Terjadi kesalahan pada server", null);
   }
 };

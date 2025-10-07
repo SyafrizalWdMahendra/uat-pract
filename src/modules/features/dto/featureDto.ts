@@ -1,7 +1,5 @@
 import z from "zod";
 
-const featurePriority = z.enum(["low", "medium", "high"]);
-
 export const featureSchema = z.object({
   project_id: z
     .number({
@@ -13,5 +11,4 @@ export const featureSchema = z.object({
       message: "Title must be a string",
     })
     .min(1, "Title at least 1 character long"),
-  priority: featurePriority,
 });

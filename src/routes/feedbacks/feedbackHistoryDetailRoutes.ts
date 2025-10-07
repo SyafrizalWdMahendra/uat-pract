@@ -1,5 +1,8 @@
 import { Router } from "express";
-import { getFeedHistoryDetails, updateFeedHistoryDetails } from "../../modules/feedbacks/controllers/feedbackDetailController";
+import {
+  getFeedHistoryDetails,
+  updateFeedHistoryDetails,
+} from "../../modules/feedbacks/controllers/feedbackDetailController";
 
 const router = Router();
 

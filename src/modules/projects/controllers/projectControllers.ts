@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 import { projectSchema } from "../dto/projectDto";
 import z from "zod";
-
-const prisma = require("../../../prisma/client");
-const responses = require("../../../utils/responses");
+import { responses } from "../../../utils/responses";
+import { prisma } from "../../../prisma/client";
+import { type ProjectStatus } from "@prisma/client";
 
 const formatDate = (date: Date | null): string | null => {
   if (!date) return null;
@@ -38,20 +38,18 @@ const createProject = async (req: Request, res: Response) => {
     ]);
 
     if (!manager || manager.role !== "manager") {
-      // Sesuaikan 'MANAGER' dengan nilai di database
       return responses(
         res,
         400,
-        "Manager ID tidak valid atau bukan seorang Manager."
+        "Manager ID tidak valid atau bukan seorang Manager.",
+        null
       );
-    }
-
-    if (!testLead || testLead.role !== "test_lead") {
-      // Sesuaikan 'TEST_LEAD' dengan nilai di database
+    } else if (!testLead || testLead.role !== "test_lead") {
       return responses(
         res,
         400,
-        "Test Lead ID tidak valid atau bukan seorang Test Lead."
+        "Test Lead ID tidak valid atau bukan seorang Test Lead.",
+        null
       );
     }
 
@@ -62,7 +60,7 @@ const createProject = async (req: Request, res: Response) => {
         title: projectData.title,
         description: projectData.description,
         priority: projectData.priority,
-        status: projectData.status,
+        status: projectData.status as ProjectStatus,
         start_date: start,
         due_date: due,
         duration: Number(duration) || null,
@@ -85,8 +83,8 @@ const getProject = async (req: Request, res: Response) => {
     const projects = await prisma.project.findMany();
     return responses(res, 200, "Project successfully retrivied", projects);
   } catch (error) {
-    console.log("Project failed to fetch");
-    return responses(res, 501, null, "Internal server error");
+    console.log("Project failed to fetch", error);
+    return responses(res, 501, "Internal server error", null);
   }
 };
 
@@ -113,7 +111,8 @@ const updateProject = async (req: Request, res: Response) => {
       return responses(
         res,
         400,
-        "Manager ID tidak valid atau bukan seorang Manager."
+        "Manager ID tidak valid atau bukan seorang Manager.",
+        null
       );
     }
 
@@ -121,7 +120,8 @@ const updateProject = async (req: Request, res: Response) => {
       return responses(
         res,
         400,
-        "Test Lead ID tidak valid atau bukan seorang Test Lead."
+        "Test Lead ID tidak valid atau bukan seorang Test Lead.",
+        null
       );
     }
 
@@ -133,7 +133,7 @@ const updateProject = async (req: Request, res: Response) => {
         title: projectData.title,
         description: projectData.description,
         priority: projectData.priority,
-        status: projectData.status,
+        status: projectData.status as ProjectStatus,
         start_date: start,
         due_date: due,
         duration: duration || null,
@@ -156,7 +156,7 @@ const deleteProject = async (req: Request, res: Response) => {
     const id = Number(req.params.id);
 
     if (isNaN(id)) {
-      return responses(res, 400, "Invalid project ID");
+      return responses(res, 400, "Invalid project ID", null);
     }
 
     const existingProject = await prisma.project.findUnique({
@@ -164,17 +164,17 @@ const deleteProject = async (req: Request, res: Response) => {
     });
 
     if (!existingProject) {
-      return responses(res, 404, "Project not found");
+      return responses(res, 404, "Project not found", null);
     }
 
     await prisma.project.delete({
       where: { id },
     });
 
-    return responses(res, 200, "Project deleted successfully", []);
+    return responses(res, 200, "Project deleted successfully", null);
   } catch (error) {
     console.error("Project delete failed:", error);
-    return responses(res, 500, "Internal server error");
+    return responses(res, 500, "Internal server error", null);
   }
 };
 
@@ -204,7 +204,7 @@ const getProjectInformation = async (req: Request, res: Response) => {
     });
 
     if (!project) {
-      return responses(res, 404, "Project not found");
+      return responses(res, 404, "Project not found", null);
     }
 
     const formattedProject = {
@@ -220,7 +220,7 @@ const getProjectInformation = async (req: Request, res: Response) => {
       0
     );
 
-    const { features, ...projectData } = formattedProject;
+    const { ...projectData } = formattedProject;
 
     const responseData = {
       ...projectData,
@@ -231,7 +231,7 @@ const getProjectInformation = async (req: Request, res: Response) => {
     return responses(res, 200, "Project successfully retrieved", responseData);
   } catch (error) {
     console.error("Failed to get project:", error);
-    return responses(res, 500, "Internal server error");
+    return responses(res, 500, "Internal server error", null);
   }
 };
 

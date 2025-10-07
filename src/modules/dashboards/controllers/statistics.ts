@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-const prisma = require("../../../prisma/client");
-const responses = require("../../../utils/responses");
+import { responses } from "../../../utils/responses";
+import { prisma } from "../../../prisma/client";
 
 const getDashboardStatistics = async (req: Request, res: Response) => {
   try {
@@ -8,24 +8,24 @@ const getDashboardStatistics = async (req: Request, res: Response) => {
       activeProjects,
       totalFeatures,
       totalTestScenarios,
-      passedScenariosCount,
+      // passedScenariosCount,
     ] = await Promise.all([
       prisma.project.count({ where: { status: "active" } }),
       prisma.feature.count(),
       prisma.testScenario.count(),
-      prisma.testScenario.count({ where: { status: "passed" } }),
+      // prisma.testScenario.count({ where: { status: "passed" } }),
     ]);
 
-    const averageProgress =
-      totalTestScenarios > 0
-        ? (passedScenariosCount / totalTestScenarios) * 100
-        : 0;
+    // const averageProgress =
+    //   totalTestScenarios > 0
+    //     ? (passedScenariosCount / totalTestScenarios) * 100
+    //     : 0;
 
     const statistics = {
       activeProjects,
       totalFeatures,
       totalTestScenarios,
-      averageProgress: Math.round(averageProgress),
+      // averageProgress: Math.round(averageProgress),
     };
 
     return responses(
@@ -36,7 +36,7 @@ const getDashboardStatistics = async (req: Request, res: Response) => {
     );
   } catch (error) {
     console.error("Failed to get dashboard statistics:", error);
-    return responses(res, 500, "Terjadi kesalahan pada server");
+    return responses(res, 500, "Terjadi kesalahan pada server", null);
   }
 };
 
@@ -63,14 +63,14 @@ const getDashboardCurrentProjects = async (req: Request, res: Response) => {
     const projectsWithScenarioCounts = await Promise.all(
       projects.map(
         async (project: {
-          id: any;
-          title: any;
-          description: any;
-          priority: any;
-          status: any;
-          duration: any;
-          due_date: any;
-          _count: { features: any };
+          id: number;
+          title: string;
+          description: string | null;
+          priority: unknown;
+          status: unknown;
+          duration: number | null;
+          due_date: Date;
+          _count: { features: number };
         }) => {
           const scenarioCount = await prisma.testScenario.count({
             where: {
@@ -111,7 +111,7 @@ const getDashboardCurrentProjects = async (req: Request, res: Response) => {
     );
   } catch (error) {
     console.error("Failed to get current projects:", error);
-    return responses(res, 500, "Terjadi kesalahan pada server");
+    return responses(res, 500, "Terjadi kesalahan pada server", null);
   }
 };
 

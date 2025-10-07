@@ -1,7 +1,7 @@
 import { feedbackSchema } from "../dto/feedbackDto";
 import { Request, Response } from "express";
-const prisma = require("../../../prisma/client");
-const responses = require("../../../utils/responses");
+import { responses } from "../../../utils/responses";
+import { prisma } from "../../../prisma/client";
 
 const createFeedback = async (req: Request, res: Response) => {
   try {
@@ -32,7 +32,7 @@ const getFeedbacks = async (req: Request, res: Response) => {
   try {
     const feedbacks = await prisma.feedback.findMany();
     if (!feedbacks) {
-      return responses(res, 404, "Feedback not found");
+      return responses(res, 404, "Feedback not found", null);
     }
     return responses(res, 200, "Feedback successfully retrivied", feedbacks);
   } catch (error) {
@@ -72,18 +72,18 @@ const deleteFeedbacks = async (req: Request, res: Response) => {
   try {
     const feedbackId = Number(req.params.id);
     if (isNaN(feedbackId)) {
-      return responses(res, 400, "Invalid feedback ID");
+      return responses(res, 400, "Invalid feedback ID", null);
     }
     const existingFeedbacks = await prisma.feedback.findUnique({
       where: { id: feedbackId },
     });
     if (!existingFeedbacks) {
-      return responses(res, 404, "Feedback not found!");
+      return responses(res, 404, "Feedback not found!", null);
     }
     await prisma.feedback.delete({
       where: { id: feedbackId },
     });
-    return responses(res, 201, "Feedback successfully deleted", []);
+    return responses(res, 201, "Feedback successfully deleted", null);
   } catch (error) {
     console.error("Delete feedback error:", error);
     return responses(res, 500, "Internal server error", String(error));

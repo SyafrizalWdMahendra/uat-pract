@@ -1,9 +1,8 @@
 import z from "zod";
 import { featureSchema } from "../dto/featureDto";
 import { Request, Response } from "express";
-
-const prisma = require("../../../prisma/client");
-const responses = require("../../../utils/responses");
+import { responses } from "../../../utils/responses";
+import { prisma } from "../../../prisma/client";
 
 const createFeature = async (req: Request, res: Response) => {
   try {
@@ -32,7 +31,7 @@ const getFeatures = async (req: Request, res: Response) => {
     const features = await prisma.feature.findMany();
     return responses(res, 200, "Feature successfully retrivied", features);
   } catch (error) {
-    console.error("Feature failed retrivied");
+    console.error("Feature failed retrivied", error);
   }
 };
 
@@ -65,7 +64,7 @@ const deleteFeatures = async (req: Request, res: Response) => {
     const id = Number(req.params.id);
 
     if (isNaN(id)) {
-      return responses(res, 400, "Invalid feature ID");
+      return responses(res, 400, "Invalid feature ID", null);
     }
 
     const existingFeatures = await prisma.feature.findUnique({
@@ -73,7 +72,7 @@ const deleteFeatures = async (req: Request, res: Response) => {
     });
 
     if (!existingFeatures) {
-      return responses(res, 404, "Feature not found");
+      return responses(res, 404, "Feature not found", null);
     }
 
     await prisma.feature.delete({
@@ -83,7 +82,7 @@ const deleteFeatures = async (req: Request, res: Response) => {
     return responses(res, 200, "Feature deleted successfully", []);
   } catch (error) {
     console.error("Feature delete failed:", error);
-    return responses(res, 500, "Internal server error");
+    return responses(res, 500, "Internal server error", null);
   }
 };
 

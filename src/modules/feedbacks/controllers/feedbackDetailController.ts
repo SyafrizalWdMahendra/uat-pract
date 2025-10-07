@@ -1,8 +1,9 @@
 import { Request, Response } from "express";
-import z from "zod";
+import { ZodError } from "zod";
 import { updateDetailsSchema } from "../dto/feedbackDetailUpdateDto";
-const prisma = require("../../../prisma/client");
-const responses = require("../../../utils/responses");
+import { responses } from "../../../utils/responses";
+import { prisma } from "../../../prisma/client";
+import { type Prisma, ProjectPriority } from "@prisma/client";
 
 const getFeedHistoryDetails = async (req: Request, res: Response) => {
   try {
@@ -39,7 +40,7 @@ const getFeedHistoryDetails = async (req: Request, res: Response) => {
       },
     });
     if (!feedHistories) {
-      return responses(res, 404, "Feedback not found!");
+      return responses(res, 404, "Feedback not found!", null);
     }
     return responses(
       res,
@@ -57,62 +58,23 @@ const updateFeedHistoryDetails = async (req: Request, res: Response) => {
   try {
     const feedbackHistoryId = Number(req.params.id);
     if (isNaN(feedbackHistoryId)) {
-      return responses(res, 404, "ID riwayat feedback tidak valid");
+      return responses(res, 404, "ID riwayat feedback tidak valid", null);
     }
 
     const body = updateDetailsSchema.parse(req.body);
 
     const result = await prisma.$transaction(
-      async (tx: {
-        feedback: {
-          findUniqueOrThrow: (arg0: {
-            where: { id: number };
-            select: {
-              testScenario: {
-                select: {
-                  id: boolean;
-                  feature: {
-                    select: {
-                      id: boolean;
-                      project_id: boolean;
-                    };
-                  };
-                };
-              };
-            };
-          }) => any;
-          update: (arg0: {
-            where: { id: number | any };
-            data: { description: string; status?: string };
-          }) => any;
-        };
-        testScenario: {
-          update: (arg0: { where: { id: any }; data: { code: string } }) => any;
-        };
-        feature: {
-          update: (arg0: {
-            where: { id: any };
-            data: { title: string };
-          }) => any;
-        };
-        project: {
-          update: (arg0: {
-            where: { id: any };
-            data: { priority: string };
-          }) => any;
-        };
-      }) => {
-        // Langkah 1: Dapatkan semua ID relasi dalam satu query
+      async (tx: Prisma.TransactionClient) => {
         const relations = await tx.feedback.findUniqueOrThrow({
           where: { id: feedbackHistoryId },
           select: {
             testScenario: {
               select: {
-                id: true, // ID dari tabel TestScenario
+                id: true,
                 feature: {
                   select: {
-                    id: true, // ID dari tabel Feature
-                    project_id: true, // ID dari tabel Project
+                    id: true,
+                    project_id: true,
                   },
                 },
               },
@@ -120,50 +82,66 @@ const updateFeedHistoryDetails = async (req: Request, res: Response) => {
           },
         });
 
-        // Ekstrak semua ID agar lebih mudah dibaca
         const testScenarioId = relations.testScenario?.id;
         const featureId = relations.testScenario?.feature?.id;
         const projectId = relations.testScenario?.feature?.project_id;
 
-        if (body.feedback_content) {
-          await tx.feedback.update({
-            where: { id: feedbackHistoryId },
-            data: { description: body.feedback_content },
-          });
-        }
-
-        if (body.test_scenario_code && testScenarioId) {
-          await tx.testScenario.update({
-            where: { id: testScenarioId },
-            data: { code: body.test_scenario_code },
-          });
-        }
-
-        if (body.feature_title && featureId) {
-          await tx.feature.update({
-            where: { id: featureId },
-            data: { title: body.feature_title },
-          });
-        }
-
+        let projectUpdateData: Prisma.ProjectUpdateInput = {};
         if (body.project_priority && projectId) {
-          await tx.project.update({
-            where: { id: projectId },
-            data: { priority: body.project_priority },
-          });
+          if (
+            Object.values(ProjectPriority).includes(
+              body.project_priority as ProjectPriority
+            )
+          ) {
+            projectUpdateData = {
+              priority: body.project_priority as ProjectPriority,
+            };
+          } else {
+            throw new Error(`Invalid priority value: ${body.project_priority}`);
+          }
         }
+
+        await Promise.all([
+          body.feedback_content
+            ? tx.feedback.update({
+                where: { id: feedbackHistoryId },
+                data: { description: body.feedback_content },
+              })
+            : Promise.resolve(),
+
+          body.test_scenario_code && testScenarioId
+            ? tx.testScenario.update({
+                where: { id: testScenarioId },
+                data: { code: body.test_scenario_code },
+              })
+            : Promise.resolve(),
+
+          body.feature_title && featureId
+            ? tx.feature.update({
+                where: { id: featureId },
+                data: { title: body.feature_title },
+              })
+            : Promise.resolve(),
+
+          projectId
+            ? tx.project.update({
+                where: { id: projectId },
+                data: projectUpdateData,
+              })
+            : Promise.resolve(),
+        ]);
 
         return { message: "Data terkait berhasil diperbarui" };
       }
     );
 
-    return responses(res, 200, result.message);
+    return responses(res, 200, result.message, null);
   } catch (error) {
-    if (error instanceof z.ZodError) {
+    if (error instanceof ZodError) {
       return responses(res, 400, "Input tidak valid", error);
     }
     console.error("Gagal memperbarui riwayat feedback:", error);
-    return responses(res, 500, "Internal Server Error");
+    return responses(res, 500, "Internal Server Error", null);
   }
 };
 

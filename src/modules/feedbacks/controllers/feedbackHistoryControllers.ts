@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
-import test from "node:test";
-const responses = require("../../../utils/responses");
-const prisma = require("../../../prisma/client");
+import { responses } from "../../../utils/responses";
+import { prisma } from "../../../prisma/client";
 
 const searchFeedbackHistory = async (req: Request, res: Response) => {
   try {
@@ -91,7 +90,8 @@ const searchFeedbackHistory = async (req: Request, res: Response) => {
       return responses(
         res,
         400,
-        "A valid search parameter (content, feature, or author) is required"
+        "A valid search parameter (content, feature, or author) is required",
+        null
       );
     }
 
@@ -104,7 +104,8 @@ const searchFeedbackHistory = async (req: Request, res: Response) => {
       return responses(
         res,
         404,
-        "No feedback history found matching your criteria"
+        "No feedback history found matching your criteria",
+        null
       );
     }
 
@@ -156,7 +157,8 @@ const getFeedbackHistoryById = async (req: Request, res: Response) => {
       return responses(
         res,
         404,
-        "Riwayat feedback tidak ditemukan atau Anda tidak memiliki akses."
+        "Riwayat feedback tidak ditemukan atau Anda tidak memiliki akses.",
+        null
       );
     }
 
@@ -168,7 +170,7 @@ const getFeedbackHistoryById = async (req: Request, res: Response) => {
     );
   } catch (error) {
     console.error("Gagal mengambil riwayat feedback:", error);
-    return responses(res, 500, "Internal Server Error");
+    return responses(res, 500, "Internal Server Error", String(error));
   }
 };
 
@@ -206,7 +208,7 @@ const getFeedbackHistory = async (req: Request, res: Response) => {
     );
   } catch (error) {
     console.error("Invalid to retrivied feedback histories data", error);
-    return responses(res, 500, "Internal server error");
+    return responses(res, 500, "Internal server error", String(error));
   }
 };
 
@@ -214,7 +216,7 @@ const deleteFeedbackHistory = async (req: Request, res: Response) => {
   try {
     const feedHistoryId = Number(req.params.id);
     if (isNaN(feedHistoryId)) {
-      return responses(res, 400, "Invalid feedback history ID");
+      return responses(res, 400, "Invalid feedback history ID", null);
     }
 
     const existingFeedHistory = await prisma.feedback.findUnique({
@@ -222,7 +224,7 @@ const deleteFeedbackHistory = async (req: Request, res: Response) => {
     });
 
     if (!existingFeedHistory) {
-      return responses(res, 404, "Feedback history not found!");
+      return responses(res, 404, "Feedback history not found!", null);
     }
 
     await prisma.feedback.delete({
@@ -232,7 +234,8 @@ const deleteFeedbackHistory = async (req: Request, res: Response) => {
     return responses(
       res,
       200,
-      "Feedback History and related Feedback successfully deleted"
+      "Feedback History and related Feedback successfully deleted",
+      null
     );
   } catch (error) {
     console.error("Delete feedback history error:", error);

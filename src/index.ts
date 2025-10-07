@@ -1,4 +1,4 @@
-import express, { Request, Response, NextFunction } from "express";
+import express, { Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import authRoutes from "./routes/auth/authRoutes";
@@ -9,11 +9,11 @@ import feedbackRoutes from "./routes/feedbacks/feedbackRoutes";
 import feedHistoryRoutes from "./routes/feedbacks/feedbackHistoryRoutes";
 import feedHistoryDetailRoutes from "./routes/feedbacks/feedbackHistoryDetailRoutes";
 import statisticRoutes from "./routes/dashboards/statisticRoutes";
+import { authenticateToken } from "./utils/token";
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const authenticateToken = require("./utils/token");
 
 app.use(cors());
 app.use(express.json());
@@ -28,7 +28,7 @@ app.use("/api", authenticateToken, scenarioRoutes);
 app.use("/api", authenticateToken, feedbackRoutes);
 app.use("/api", authenticateToken, feedHistoryRoutes);
 
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+app.use((err: Error, req: Request, res: Response) => {
   console.error(err.stack);
   res
     .status(500)

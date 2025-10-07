@@ -13,21 +13,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// model FeatureManagement {
-//   id          Int      @id @default(autoincrement())  // ID dengan auto increment
-//   number_info  String     // Kolom dengan nama snake_case
-//   text        String  // Kolom opsional
-//   image       String   // Status fitur
-//   background      String   // Status fitur
-//   image_position      String   // Status fitur
-//   createdAt   DateTime @default(now()) @map("created_at")  // Tanggal pembuatan otomatis
-//   updatedAt   DateTime @updatedAt   @map("updated_at")      // Tanggal pembaruan otomatis
-//   deleted_at  DateTime?
-
-//   @@map("feature_management")
-// }
-
-
 model User {
   id                Int                @id @default(autoincrement())
   name              String
@@ -78,7 +63,7 @@ model Feature {
 model TestScenario {
   id             Int                @id @default(autoincrement())
   feature_id     Int?
-  code           String?             @unique
+  code           String?            @unique
   test_case      String
   created_at     DateTime           @default(now())
   updated_at     DateTime           @updatedAt
@@ -104,21 +89,6 @@ model Feedback {
   feature          Feature          @relation(fields: [feature_id], references: [id])
   project          Project          @relation(fields: [project_id], references: [id])
 }
-
-// model FeedbackHistory {
-//   id          Int                  @id @default(autoincrement())
-//   feedback_id Int
-//   user_id     Int
-//   project_id  Int
-//   status      FeedbackHistoryStatus
-//   notes       String?
-//   created_at  DateTime             @default(now())
-//   updated_at  DateTime             @updatedAt
-
-//   feedback    Feedback             @relation(fields: [feedback_id], references: [id])
-//   user        User                 @relation(fields: [user_id], references: [id])
-//   project     Project              @relation(fields: [project_id], references: [id])
-// }
 
 enum Role {
   admin

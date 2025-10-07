@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-const responses = require("../../../utils/responses");
-const prisma = require("../../../prisma/client");
+import { responses } from "../../../utils/responses";
+import { prisma } from "../../../prisma/client";
 
 export const getUsers = async (req: Request, res: Response) => {
   try {

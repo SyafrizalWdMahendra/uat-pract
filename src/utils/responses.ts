@@ -13,5 +13,3 @@ export const responses = (
     },
   });
 };
-
-module.exports = responses;
