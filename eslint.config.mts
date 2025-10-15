@@ -1,7 +1,6 @@
-// eslint.config.js
 import globals from "globals";
 import tseslint from "typescript-eslint";
-import eslintConfigPrettier from "eslint-config-prettier"; // <-- Import prettier config
+import eslintConfigPrettier from "eslint-config-prettier";
 
 export default [
   {
@@ -14,5 +13,5 @@ export default [
   },
   ...tseslint.configs.recommended,
 
-  eslintConfigPrettier, // <-- Tambahkan ini di paling akhir
+  eslintConfigPrettier,
 ];
