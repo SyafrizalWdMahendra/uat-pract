@@ -4,6 +4,7 @@ import {
   login,
 } from "../../modules/auth/controllers/authControllers";
 import { getUsers } from "../../modules/auth/controllers/userControllers";
+// import { catchAsync } from "../../utils/catchAsync";
 
 const router = Router();
 
