@@ -4,6 +4,9 @@ import eslintConfigPrettier from "eslint-config-prettier";
 
 export default [
   {
+    ignores: ["node_modules/", "dist/", "coverage/"],
+  },
+  {
     files: ["**/*.{js,ts}"],
     languageOptions: {
       globals: {

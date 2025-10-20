@@ -1,10 +1,9 @@
 import request from "supertest";
-import app from "../../../app"; // Pastikan Anda mengimpor 'app' dari app.ts
+import app from "../../../app";
 import { prisma } from "../../../prisma/client";
 import bcrypt from "bcrypt";
 
 // --- Mocking Dependencies ---
-// Mock Prisma Client
 jest.mock("../../../prisma/client", () => ({
   prisma: {
     user: {
@@ -14,30 +13,19 @@ jest.mock("../../../prisma/client", () => ({
   },
 }));
 
-// Mock bcrypt
 jest.mock("bcrypt", () => ({
-  ...jest.requireActual("bcrypt"), // Gunakan implementasi asli untuk hash, tapi mock compare
+  ...jest.requireActual("bcrypt"),
   compare: jest.fn(),
 }));
 
 // --- Setup ---
-// Atur environment variable untuk JWT
 process.env.JWT_SECRET = "secret-test-key-yang-aman";
 
-// Tipe casting untuk mempermudah penggunaan mock
-const mockedPrisma = prisma as unknown as {
-  user: {
-    findUnique: jest.Mock<any, any>;
-    create: jest.Mock<any, any>;
-  };
-};
-const mockedBcrypt = bcrypt as unknown as {
-  compare: jest.Mock<any, any>;
-};
+const mockedPrisma = prisma as jest.Mocked<typeof prisma>;
+const mockedBcrypt = bcrypt as jest.Mocked<typeof bcrypt>;
 
 // --- Test Suites ---
 describe("Auth Endpoints", () => {
-  // Reset semua mock sebelum setiap tes dijalankan
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -54,17 +42,19 @@ describe("Auth Endpoints", () => {
     };
 
     test("should register a new user successfully and return 201", async () => {
-      // Arrange: User tidak ditemukan & proses create berhasil
-      mockedPrisma.user.findUnique.mockResolvedValue(null);
-      const { password, ...createdUser } = { id: "3", ...registerPayload }; // Respons tidak mengandung password
-      mockedPrisma.user.create.mockResolvedValue(createdUser);
+      (mockedPrisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+      const createdUser = {
+        id: "1",
+        name: registerPayload.name,
+        email: registerPayload.email,
+        role: registerPayload.role,
+      };
+      (mockedPrisma.user.create as jest.Mock).mockResolvedValue(createdUser);
 
-      // Act
       const response = await request(app)
-        .post("/api/register") // Sesuaikan path jika berbeda
+        .post("/api/register")
         .send(registerPayload);
 
-      // Assert
       expect(response.status).toBe(201);
       expect(response.body.payload.message).toBe(
         "User successfully registered"
@@ -77,36 +67,28 @@ describe("Auth Endpoints", () => {
     });
 
     test("should return 409 if email is already registered", async () => {
-      // Arrange: User dengan email yang sama sudah ada
-      mockedPrisma.user.findUnique.mockResolvedValue({
+      (mockedPrisma.user.findUnique as jest.Mock).mockResolvedValue({
         id: "1",
         ...registerPayload,
         password: "hashedpassword",
       });
 
-      // Act
       const response = await request(app)
         .post("/api/register")
         .send(registerPayload);
 
-      // Assert
       expect(response.status).toBe(409);
       expect(response.body.payload.message).toBe("Email already registered");
       expect(mockedPrisma.user.create).not.toHaveBeenCalled();
     });
 
     test("should return 400 for invalid registration data (Zod validation)", async () => {
-      // Arrange: Kirim payload yang tidak valid (misal: email salah format)
       const invalidPayload = { ...registerPayload, email: "not-an-email" };
 
-      // Act
       const response = await request(app)
         .post("/api/register")
         .send(invalidPayload);
 
-      // Assert
-      // Zod biasanya akan menghasilkan error yang ditangkap oleh error handler
-      // dan menghasilkan status 400 (Bad Request) jika di-setup dengan benar.
       expect(response.status).toBe(400);
     });
   });
@@ -128,16 +110,11 @@ describe("Auth Endpoints", () => {
     };
 
     test("should login successfully and return a token with status 200", async () => {
-      // Arrange: User ditemukan dan password cocok
-      mockedPrisma.user.findUnique.mockResolvedValue(mockUser);
-      mockedBcrypt.compare.mockResolvedValue(true);
+      (mockedPrisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
+      (mockedBcrypt.compare as jest.Mock).mockResolvedValue(true);
 
-      // Act
-      const response = await request(app)
-        .post("/api/login") // Sesuaikan path jika berbeda
-        .send(loginPayload);
+      const response = await request(app).post("/api/login").send(loginPayload);
 
-      // Assert
       expect(response.status).toBe(200);
       expect(response.body.payload.message).toBe("Login berhasil");
       expect(response.body.payload.data).toHaveProperty("token");
@@ -149,44 +126,31 @@ describe("Auth Endpoints", () => {
     });
 
     test("should return 404 if user is not found", async () => {
-      // Arrange: User tidak ditemukan di database
-      mockedPrisma.user.findUnique.mockResolvedValue(null);
+      (mockedPrisma.user.findUnique as jest.Mock).mockResolvedValue(null);
 
-      // Act
-      const response = await request(app)
-        .post("/api/login")
-        .send(loginPayload);
+      const response = await request(app).post("/api/login").send(loginPayload);
 
-      // Assert
       expect(response.status).toBe(404);
       expect(response.body.payload.message).toBe("Pengguna tidak ditemukan");
     });
 
     test("should return 401 if password is invalid", async () => {
-      // Arrange: User ditemukan tapi password salah
-      mockedPrisma.user.findUnique.mockResolvedValue(mockUser);
-      mockedBcrypt.compare.mockResolvedValue(false);
+      (mockedPrisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
+      (mockedBcrypt.compare as jest.Mock).mockResolvedValue(false);
 
-      // Act
-      const response = await request(app)
-        .post("/api/login")
-        .send(loginPayload);
+      const response = await request(app).post("/api/login").send(loginPayload);
 
-      // Assert
       expect(response.status).toBe(401);
       expect(response.body.payload.message).toBe("Email atau password salah");
     });
 
     test("should return 400 for invalid login data (e.g., missing password)", async () => {
-      // Arrange: Payload tidak lengkap
       const invalidPayload = { email: "user@example.com" };
 
-      // Act
       const response = await request(app)
         .post("/api/login")
         .send(invalidPayload);
 
-      // Assert
       expect(response.status).toBe(400);
     });
   });

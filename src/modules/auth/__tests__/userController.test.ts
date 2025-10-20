@@ -1,8 +1,7 @@
 import request from "supertest";
-import app from "../../../app"; // <-- Impor aplikasi Express Anda
+import app from "../../../app";
 import { prisma } from "../../../prisma/client";
 
-// Mocking module tetap sama
 jest.mock("../../../prisma/client", () => ({
   prisma: {
     user: {
@@ -11,14 +10,9 @@ jest.mock("../../../prisma/client", () => ({
   },
 }));
 
-// Kita tidak perlu mock 'responses' lagi karena kita akan menguji output HTTP asli
-// jest.mock("../../../utils/responses", ...); // <-- HAPUS ATAU KOMENTARI INI
-
 const mockedPrismaUserFindMany = prisma.user.findMany as jest.Mock;
 
 describe("GET /api/getUsers Endpoint", () => {
-  // <-- Ganti deskripsi menjadi nama endpoint
-
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -33,7 +27,6 @@ describe("GET /api/getUsers Endpoint", () => {
     const response = await request(app).get("/api/getUsers");
 
     expect(response.status).toBe(200);
-    // Baris di bawah ini yang akan kita perbaiki
     expect(response.body.payload.data).toEqual(mockUsers);
     expect(mockedPrismaUserFindMany).toHaveBeenCalledTimes(1);
   });
@@ -48,15 +41,13 @@ describe("GET /api/getUsers Endpoint", () => {
     expect(response.body.payload.data).toEqual([]);
   });
 
-  // Test 3: Skenario error (INI PERBAIKAN UTAMANYA)
+  // Test 3: Skenario error
   test("should return 500 when a database error occurs", async () => {
     const mockError = new Error("Database connection failed");
     mockedPrismaUserFindMany.mockRejectedValue(mockError);
 
-    // Lakukan request yang kita harapkan akan gagal
     const response = await request(app).get("/api/getUsers");
 
-    // Lakukan pengecekan pada response yang dikirim oleh error handler terpusat Anda
     expect(response.status).toBe(500);
     expect(response.body).toEqual({
       message: "Something went wrong!",
