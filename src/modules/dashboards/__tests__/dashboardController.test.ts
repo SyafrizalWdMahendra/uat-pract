@@ -32,7 +32,6 @@ describe("Dashboard Endpoints", () => {
         totalFeatures: 25,
         totalTestScenarios: 120,
       };
-
       (prisma.project.count as jest.Mock).mockResolvedValue(
         mockStatistics.activeProjects
       );
@@ -53,6 +52,18 @@ describe("Dashboard Endpoints", () => {
 
       expect(prisma.project.count).toHaveBeenCalledWith({
         where: { status: "active" },
+      });
+    });
+
+    test("should return 500 when a database error occurs", async () => {
+      const mockError = new Error("Database connection failed");
+      (prisma.project.count as jest.Mock).mockRejectedValue(mockError);
+
+      const response = await request(app).get("/api/dashboard/statistics");
+
+      expect(response.status).toBe(500);
+      expect(response.body).toEqual({
+        message: "Something went wrong!",
       });
     });
   });
@@ -133,6 +144,18 @@ describe("Dashboard Endpoints", () => {
       });
       expect(prisma.testScenario.count).toHaveBeenCalledWith({
         where: { feature: { project_id: 2 } },
+      });
+    });
+
+    test("should return 500 when a database error occurs", async () => {
+      const mockError = new Error("Database connection failed");
+      (prisma.project.findMany as jest.Mock).mockRejectedValue(mockError);
+
+      const response = await request(app).get("/api/dashboard/currentProject");
+
+      expect(response.status).toBe(500);
+      expect(response.body).toEqual({
+        message: "Something went wrong!",
       });
     });
   });
