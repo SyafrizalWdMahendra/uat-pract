@@ -6,4 +6,5 @@ export default {
   },
   moduleFileExtensions: ["ts", "js", "json"],
   testMatch: ["**/__tests__/**/*.test.ts"],
+  verbose: true,
 };
