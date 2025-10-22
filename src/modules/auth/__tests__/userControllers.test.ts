@@ -17,7 +17,6 @@ describe("GET /api/getUsers Endpoint", () => {
     jest.clearAllMocks();
   });
 
-  // Test 1: Skenario sukses
   test("should return 200 and all users successfully", async () => {
     const mockUsers = [
       { id: "1", name: "John Doe", email: "john@example.com", role: "USER" },
@@ -31,7 +30,6 @@ describe("GET /api/getUsers Endpoint", () => {
     expect(mockedPrismaUserFindMany).toHaveBeenCalledTimes(1);
   });
 
-  // Test 2: Skenario data kosong
   test("should return 200 and an empty array if no users are found", async () => {
     mockedPrismaUserFindMany.mockResolvedValue([]);
 
@@ -41,7 +39,6 @@ describe("GET /api/getUsers Endpoint", () => {
     expect(response.body.payload.data).toEqual([]);
   });
 
-  // Test 3: Skenario error
   test("should return 500 when a database error occurs", async () => {
     const mockError = new Error("Database connection failed");
     mockedPrismaUserFindMany.mockRejectedValue(mockError);

@@ -33,7 +33,7 @@ const updateFeatures = async (req: Request, res: Response) => {
     },
   });
 
-  return responses(res, 201, "Feature successfully updated", features);
+  return responses(res, 200, "Feature successfully updated", features);
 };
 
 const deleteFeatures = async (req: Request, res: Response) => {
