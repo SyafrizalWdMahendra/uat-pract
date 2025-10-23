@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 
 jest.mock("../../../prisma/client", () => ({
   prisma: {
-    feature: {
+    feedback: {
       create: jest.fn(),
       findMany: jest.fn(),
       update: jest.fn(),
@@ -22,7 +22,7 @@ jest.mock("jsonwebtoken", () => ({
 
 const mockedJwt = jwt as jest.Mocked<typeof jwt>;
 
-describe("testing features", () => {
+describe("testing feedback", () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
@@ -49,39 +49,45 @@ describe("testing features", () => {
   });
 
   // =================================================================
-  // ==  TESTS FOR CREATE FEATURE ==
+  // ==  TESTS FOR CREATE FEEDBACK ==
   // =================================================================
-  describe("POST /api/features", () => {
-    const featurePayload = {
+  describe("POST /api/feedbacks", () => {
+    const feedbackPayload = {
+      user_id: 1,
+      test_scenario_id: 1,
       project_id: 1,
-      title: "Authentication",
+      feature_id: 1,
+      description: "very good feature",
+      priority: "low",
+      status: "open",
     };
 
-    test("should return feature successfully created with status 201", async () => {
-      (prisma.feature.create as jest.Mock).mockResolvedValue(featurePayload);
+    test("should return feedback successfully created with status 201", async () => {
+      (prisma.feedback.create as jest.Mock).mockResolvedValue(feedbackPayload);
 
       const response = await request(app)
-        .post("/api/features")
+        .post("/api/feedbacks")
         .set("Authorization", "Bearer dummy-token")
-        .send(featurePayload);
+        .send(feedbackPayload);
 
       expect(response.status).toBe(201);
       expect(response.body.payload.message).toBe(
-        "Feature successfully created"
+        "Feedback successfully created"
       );
-      expect(response.body.payload.data).toEqual(featurePayload);
-
-      expect(prisma.feature.create).toHaveBeenCalledTimes(1);
-      expect(prisma.feature.create).toHaveBeenCalledWith({
-        data: featurePayload,
+      expect(response.body.payload.data).toEqual({
+        createdFeedback: feedbackPayload,
+      });
+      expect(prisma.feedback.create).toHaveBeenCalledTimes(1);
+      expect(prisma.feedback.create).toHaveBeenCalledWith({
+        data: feedbackPayload,
       });
     });
 
-    test("should return 400 for invalid created feature data (Zod validation)", async () => {
-      const invalidPayload = { ...featurePayload, project_id: "1" };
+    test("should return 400 for invalid created feedback data (Zod validation)", async () => {
+      const invalidPayload = { ...feedbackPayload, user_id: "1" };
 
       const response = await request(app)
-        .post("/api/features")
+        .post("/api/feedbacks")
         .set("Authorization", "Bearer dummy-token")
         .send(invalidPayload);
 
@@ -90,12 +96,12 @@ describe("testing features", () => {
 
     test("should return 500 when a database error occurs", async () => {
       const mockError = new Error("Database connection failed");
-      (prisma.feature.create as jest.Mock).mockRejectedValue(mockError);
+      (prisma.feedback.create as jest.Mock).mockRejectedValue(mockError);
 
       const response = await request(app)
-        .post("/api/features")
+        .post("/api/feedbacks")
         .set("Authorization", "Bearer dummy-token")
-        .send(featurePayload);
+        .send(feedbackPayload);
 
       expect(response.status).toBe(500);
       expect(response.body).toEqual({
@@ -105,35 +111,53 @@ describe("testing features", () => {
   });
 
   // =================================================================
-  // ==  TESTS FOR GET FEATURE ==
+  // ==  TESTS FOR GET FEEDBACK ==
   // =================================================================
-  describe("GET /api/features", () => {
-    const featurePayload = {
+  describe("GET /api/feedbacks", () => {
+    const feedbackPayload = {
+      user_id: 1,
+      test_scenario_id: 1,
       project_id: 1,
-      title: "Authentication",
+      feature_id: 1,
+      description: "very good feature",
+      priority: "low",
+      status: "open",
     };
 
-    test("should return 200 and all feature successfully", async () => {
-      (prisma.feature.findMany as jest.Mock).mockResolvedValue(featurePayload);
+    test("should return 200 and all feedback successfully", async () => {
+      (prisma.feedback.findMany as jest.Mock).mockResolvedValue(
+        feedbackPayload
+      );
 
       const response = await request(app)
-        .get("/api/features")
+        .get("/api/feedbacks")
         .set("Authorization", "Bearer dummy-token");
 
       expect(response.status).toBe(200);
       expect(response.body.payload.message).toBe(
-        "Feature successfully retrivied"
+        "Feedback successfully retrivied"
       );
+    });
+
+    test("should return 404 when feedback data not found", async () => {
+      (prisma.feedback.findMany as jest.Mock).mockResolvedValue(null);
+
+      const response = await request(app)
+        .get("/api/feedbacks")
+        .set("Authorization", "Bearer dummy-token");
+
+      expect(response.status).toBe(404);
+      expect(response.body.payload.message).toBe("Feedback not found");
     });
 
     test("should return 500 when a database error occurs", async () => {
       const mockError = new Error("Database connection failed");
-      (prisma.feature.create as jest.Mock).mockRejectedValue(mockError);
+      (prisma.feedback.findMany as jest.Mock).mockRejectedValue(mockError);
 
       const response = await request(app)
-        .post("/api/features")
+        .get("/api/feedbacks")
         .set("Authorization", "Bearer dummy-token")
-        .send(featurePayload);
+        .send(feedbackPayload);
 
       expect(response.status).toBe(500);
       expect(response.body).toEqual({
@@ -143,47 +167,57 @@ describe("testing features", () => {
   });
 
   // =================================================================
-  // ==  TESTS FOR UPDATE FEATURE ==
+  // ==  TESTS FOR UPDATE FEEDBACK ==
   // =================================================================
-  describe("PATCH /api/features/:id", () => {
-    const featureId = 1;
+  describe("PATCH /api/feedbacks/:id", () => {
+    const feedbackId = 1;
     const updatePayload = {
+      user_id: 1,
+      test_scenario_id: 1,
       project_id: 1,
-      title: "Dashboard",
+      feature_id: 1,
+      description: "very good feature",
+      priority: "low",
+      status: "open",
     };
-    const expectedUpdatedFeature = {
+    const expectedUpdatedFeedback = {
       id: 1,
+      user_id: updatePayload.user_id,
+      test_scenario_id: updatePayload.test_scenario_id,
       project_id: updatePayload.project_id,
-      title: updatePayload.title,
+      feature_id: updatePayload.feature_id,
+      description: updatePayload.description,
+      priority: updatePayload.priority,
+      status: updatePayload.status,
     };
 
-    test("should update a feature successfully and return 200", async () => {
-      (prisma.feature.update as jest.Mock).mockResolvedValue(
-        expectedUpdatedFeature
+    test("should update a feedback successfully and return 200", async () => {
+      (prisma.feedback.update as jest.Mock).mockResolvedValue(
+        expectedUpdatedFeedback
       );
 
       const response = await request(app)
-        .patch(`/api/features/${featureId}`)
+        .patch(`/api/feedbacks/${feedbackId}`)
         .set("Authorization", "Bearer dummy-token")
         .send(updatePayload);
 
       expect(response.status).toBe(200);
       expect(response.body.payload.message).toBe(
-        "Feature successfully updated"
+        "Feedback successfully updated"
       );
-      expect(response.body.payload.data).toEqual(expectedUpdatedFeature);
-      expect(prisma.feature.update).toHaveBeenCalledTimes(1);
-      expect(prisma.feature.update).toHaveBeenCalledWith({
-        where: { id: featureId },
+      expect(response.body.payload.data).toEqual(expectedUpdatedFeedback);
+      expect(prisma.feedback.update).toHaveBeenCalledTimes(1);
+      expect(prisma.feedback.update).toHaveBeenCalledWith({
+        where: { id: feedbackId },
         data: updatePayload,
       });
     });
 
     test("should return 400 for invalid update data (Zod validation)", async () => {
-      const invalidPayload = { ...updatePayload, title: null };
+      const invalidPayload = { ...updatePayload, user_id: null };
 
       const response = await request(app)
-        .patch(`/api/features/${featureId}`)
+        .patch(`/api/feedbacks/${feedbackId}`)
         .set("Authorization", "Bearer dummy-token")
         .send(invalidPayload);
 
@@ -192,10 +226,10 @@ describe("testing features", () => {
 
     test("should return 500 when a database error occurs during update", async () => {
       const mockError = new Error("Database update failed");
-      (prisma.feature.update as jest.Mock).mockRejectedValue(mockError);
+      (prisma.feedback.update as jest.Mock).mockRejectedValue(mockError);
 
       const response = await request(app)
-        .patch(`/api/features/${featureId}`)
+        .patch(`/api/feedbacks/${feedbackId}`)
         .set("Authorization", "Bearer dummy-token")
         .send(updatePayload);
 
@@ -207,65 +241,74 @@ describe("testing features", () => {
   });
 
   // =================================================================
-  // ==  TESTS FOR DELETE FEATURE ==
+  // ==  TESTS FOR DELETE FEEDBACK ==
   // =================================================================
-  describe("DELETE /api/features/:id", () => {
-    const featureId = 1;
-    const mockFeature = { id: featureId, title: "Test Feature", project_id: 1 };
+  describe("DELETE /api/feedbacks/:id", () => {
+    const feedbackId = 1;
+    const mockFeedback = {
+      id: feedbackId,
+      user_id: 1,
+      test_scenario_id: 1,
+      project_id: 1,
+      feature_id: 1,
+      description: "very good feature",
+      priority: "low",
+      status: "open",
+    };
 
     test("should delete a feature successfully and return 200", async () => {
-      (prisma.feature.findUnique as jest.Mock).mockResolvedValue(mockFeature);
-      (prisma.feature.delete as jest.Mock).mockResolvedValue(mockFeature);
+      (prisma.feedback.findUnique as jest.Mock).mockResolvedValue(mockFeedback);
+      (prisma.feedback.delete as jest.Mock).mockResolvedValue(mockFeedback);
 
       const response = await request(app)
-        .delete(`/api/features/${featureId}`)
+        .delete(`/api/feedbacks/${feedbackId}`)
         .set("Authorization", "Bearer dummy-token");
 
       expect(response.status).toBe(200);
       expect(response.body.payload.message).toBe(
-        "Feature deleted successfully"
+        "Feedback successfully deleted"
       );
-      expect(response.body.payload.data).toEqual([]);
-      expect(prisma.feature.findUnique).toHaveBeenCalledWith({
-        where: { id: featureId },
+      expect(response.body.payload.data).toEqual(null);
+      expect(prisma.feedback.findUnique).toHaveBeenCalledWith({
+        where: { id: feedbackId },
       });
-      expect(prisma.feature.delete).toHaveBeenCalledWith({
-        where: { id: featureId },
+      expect(prisma.feedback.delete).toHaveBeenCalledWith({
+        where: { id: feedbackId },
       });
     });
 
-    test("should return 404 if feature is not found", async () => {
-      (prisma.feature.findUnique as jest.Mock).mockResolvedValue(null);
+    test("should return 404 if feedback is not found", async () => {
+      (prisma.feedback.findUnique as jest.Mock).mockResolvedValue(null);
 
       const response = await request(app)
-        .delete(`/api/features/${featureId}`)
+        .delete(`/api/feedbacks/${feedbackId}`)
         .set("Authorization", "Bearer dummy-token");
 
       expect(response.status).toBe(404);
-      expect(response.body.payload.message).toBe("Feature not found");
-      expect(prisma.feature.delete).not.toHaveBeenCalled();
+      expect(response.body.payload.message).toBe("Feedback not found!");
+      expect(prisma.feedback.delete).not.toHaveBeenCalled();
     });
 
-    test("should return 400 for an invalid (NaN) feature ID", async () => {
+    test("should return 400 for an invalid (NaN) feedback ID", async () => {
       const invalidId = "abc";
 
       const response = await request(app)
-        .delete(`/api/features/${invalidId}`)
+        .delete(`/api/feedbacks/${invalidId}`)
         .set("Authorization", "Bearer dummy-token");
 
       expect(response.status).toBe(400);
-      expect(response.body.payload.message).toBe("Invalid feature ID");
-      expect(prisma.feature.findUnique).not.toHaveBeenCalled();
-      expect(prisma.feature.delete).not.toHaveBeenCalled();
+      expect(response.body.payload.message).toBe("Invalid feedback ID");
+      expect(prisma.feedback.findUnique).not.toHaveBeenCalled();
+      expect(prisma.feedback.delete).not.toHaveBeenCalled();
     });
 
     test("should return 500 if delete operation fails", async () => {
-      (prisma.feature.findUnique as jest.Mock).mockResolvedValue(mockFeature);
+      (prisma.feedback.findUnique as jest.Mock).mockResolvedValue(mockFeedback);
       const mockError = new Error("Database delete failed");
-      (prisma.feature.delete as jest.Mock).mockRejectedValue(mockError);
+      (prisma.feedback.delete as jest.Mock).mockRejectedValue(mockError);
 
       const response = await request(app)
-        .delete(`/api/features/${featureId}`)
+        .delete(`/api/feedbacks/${feedbackId}`)
         .set("Authorization", "Bearer dummy-token");
 
       expect(response.status).toBe(500);

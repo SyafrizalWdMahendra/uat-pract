@@ -51,7 +51,7 @@ const getFeedHistoryDetails = async (req: Request, res: Response) => {
 const updateFeedHistoryDetails = async (req: Request, res: Response) => {
   const feedbackHistoryId = Number(req.params.id);
   if (isNaN(feedbackHistoryId)) {
-    return responses(res, 404, "ID riwayat feedback tidak valid", null);
+    return responses(res, 400, "Invalid feedback history detail ID", null);
   }
 
   const body = updateDetailsSchema.parse(req.body);

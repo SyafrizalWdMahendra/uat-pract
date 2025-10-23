@@ -25,9 +25,11 @@ const createFeedback = async (req: Request, res: Response) => {
 
 const getFeedbacks = async (req: Request, res: Response) => {
   const feedbacks = await prisma.feedback.findMany();
+
   if (!feedbacks) {
     return responses(res, 404, "Feedback not found", null);
   }
+
   return responses(res, 200, "Feedback successfully retrivied", feedbacks);
 };
 
@@ -50,7 +52,7 @@ const updateFeedbacks = async (req: Request, res: Response) => {
     data: feedbackValidation.data,
   });
 
-  return responses(res, 201, "Feedback successfully updated", feedbacks);
+  return responses(res, 200, "Feedback successfully updated", feedbacks);
 };
 
 const deleteFeedbacks = async (req: Request, res: Response) => {
@@ -67,7 +69,7 @@ const deleteFeedbacks = async (req: Request, res: Response) => {
   await prisma.feedback.delete({
     where: { id: feedbackId },
   });
-  return responses(res, 201, "Feedback successfully deleted", null);
+  return responses(res, 200, "Feedback successfully deleted", null);
 };
 
 export { createFeedback, getFeedbacks, updateFeedbacks, deleteFeedbacks };
