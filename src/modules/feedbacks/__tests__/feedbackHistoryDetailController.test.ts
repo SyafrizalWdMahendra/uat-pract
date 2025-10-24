@@ -110,6 +110,8 @@ describe("testing feedback detail", () => {
     });
   });
 
+  const authHeader = { Authorization: "Bearer dummy-token" };
+
   // =================================================================
   // ==  TESTS FOR FIND FEEDBACK HISTORY DETAIL ==
   // =================================================================
@@ -132,7 +134,7 @@ describe("testing feedback detail", () => {
 
       const response = await request(app)
         .get("/api/feedback-history/details/1")
-        .set("Authorization", "Bearer dummy-token");
+        .set(authHeader);
 
       expect(response.status).toBe(200);
       expect(response.body.payload.data).toEqual(mockFeedbackDetail);
@@ -146,7 +148,7 @@ describe("testing feedback detail", () => {
 
       const response = await request(app)
         .get("/api/feedback-history/details/999")
-        .set("Authorization", "Bearer dummy-token");
+        .set(authHeader);
 
       expect(response.status).toBe(404);
       expect(response.body.payload.message).toBe("Feedback not found!");
@@ -167,7 +169,7 @@ describe("testing feedback detail", () => {
     test("should update all related data successfully with status 200", async () => {
       const response = await request(app)
         .patch("/api/feedback-history/details/1")
-        .set("Authorization", "Bearer dummy-token")
+        .set(authHeader)
         .send(fullUpdatePayload);
 
       expect(response.status).toBe(200);
@@ -196,7 +198,7 @@ describe("testing feedback detail", () => {
     test("should return 400 for an invalid ID", async () => {
       const response = await request(app)
         .patch("/api/feedback-history/details/abc")
-        .set("Authorization", "Bearer dummy-token")
+        .set(authHeader)
         .send(fullUpdatePayload);
 
       expect(response.status).toBe(400);
@@ -208,7 +210,7 @@ describe("testing feedback detail", () => {
     test("should return 400 for invalid request body (Zod validation)", async () => {
       const response = await request(app)
         .patch("/api/feedback-history/details/1")
-        .set("Authorization", "Bearer dummy-token")
+        .set(authHeader)
         .send({ feedback_content: 12345 });
 
       expect(response.status).toBe(400);
@@ -219,7 +221,7 @@ describe("testing feedback detail", () => {
 
       const response = await request(app)
         .patch("/api/feedback-history/details/1")
-        .set("Authorization", "Bearer dummy-token")
+        .set(authHeader)
         .send(fullUpdatePayload);
 
       expect(response.status).toBe(500);

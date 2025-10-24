@@ -48,6 +48,8 @@ describe("testing feedback", () => {
     );
   });
 
+  const authHeader = { Authorization: "Bearer dummy-token" };
+
   // =================================================================
   // ==  TESTS FOR CREATE FEEDBACK ==
   // =================================================================
@@ -67,7 +69,7 @@ describe("testing feedback", () => {
 
       const response = await request(app)
         .post("/api/feedbacks")
-        .set("Authorization", "Bearer dummy-token")
+        .set(authHeader)
         .send(feedbackPayload);
 
       expect(response.status).toBe(201);
@@ -88,7 +90,7 @@ describe("testing feedback", () => {
 
       const response = await request(app)
         .post("/api/feedbacks")
-        .set("Authorization", "Bearer dummy-token")
+        .set(authHeader)
         .send(invalidPayload);
 
       expect(response.status).toBe(400);
@@ -100,7 +102,7 @@ describe("testing feedback", () => {
 
       const response = await request(app)
         .post("/api/feedbacks")
-        .set("Authorization", "Bearer dummy-token")
+        .set(authHeader)
         .send(feedbackPayload);
 
       expect(response.status).toBe(500);
@@ -129,9 +131,7 @@ describe("testing feedback", () => {
         feedbackPayload
       );
 
-      const response = await request(app)
-        .get("/api/feedbacks")
-        .set("Authorization", "Bearer dummy-token");
+      const response = await request(app).get("/api/feedbacks").set(authHeader);
 
       expect(response.status).toBe(200);
       expect(response.body.payload.message).toBe(
@@ -142,9 +142,7 @@ describe("testing feedback", () => {
     test("should return 404 when feedback data not found", async () => {
       (prisma.feedback.findMany as jest.Mock).mockResolvedValue(null);
 
-      const response = await request(app)
-        .get("/api/feedbacks")
-        .set("Authorization", "Bearer dummy-token");
+      const response = await request(app).get("/api/feedbacks").set(authHeader);
 
       expect(response.status).toBe(404);
       expect(response.body.payload.message).toBe("Feedback not found");
@@ -156,7 +154,7 @@ describe("testing feedback", () => {
 
       const response = await request(app)
         .get("/api/feedbacks")
-        .set("Authorization", "Bearer dummy-token")
+        .set(authHeader)
         .send(feedbackPayload);
 
       expect(response.status).toBe(500);
@@ -198,7 +196,7 @@ describe("testing feedback", () => {
 
       const response = await request(app)
         .patch(`/api/feedbacks/${feedbackId}`)
-        .set("Authorization", "Bearer dummy-token")
+        .set(authHeader)
         .send(updatePayload);
 
       expect(response.status).toBe(200);
@@ -218,7 +216,7 @@ describe("testing feedback", () => {
 
       const response = await request(app)
         .patch(`/api/feedbacks/${feedbackId}`)
-        .set("Authorization", "Bearer dummy-token")
+        .set(authHeader)
         .send(invalidPayload);
 
       expect(response.status).toBe(400);
@@ -230,7 +228,7 @@ describe("testing feedback", () => {
 
       const response = await request(app)
         .patch(`/api/feedbacks/${feedbackId}`)
-        .set("Authorization", "Bearer dummy-token")
+        .set(authHeader)
         .send(updatePayload);
 
       expect(response.status).toBe(500);
@@ -262,7 +260,7 @@ describe("testing feedback", () => {
 
       const response = await request(app)
         .delete(`/api/feedbacks/${feedbackId}`)
-        .set("Authorization", "Bearer dummy-token");
+        .set(authHeader);
 
       expect(response.status).toBe(200);
       expect(response.body.payload.message).toBe(
@@ -282,7 +280,7 @@ describe("testing feedback", () => {
 
       const response = await request(app)
         .delete(`/api/feedbacks/${feedbackId}`)
-        .set("Authorization", "Bearer dummy-token");
+        .set(authHeader);
 
       expect(response.status).toBe(404);
       expect(response.body.payload.message).toBe("Feedback not found!");
@@ -294,7 +292,7 @@ describe("testing feedback", () => {
 
       const response = await request(app)
         .delete(`/api/feedbacks/${invalidId}`)
-        .set("Authorization", "Bearer dummy-token");
+        .set(authHeader);
 
       expect(response.status).toBe(400);
       expect(response.body.payload.message).toBe("Invalid feedback ID");
@@ -309,7 +307,7 @@ describe("testing feedback", () => {
 
       const response = await request(app)
         .delete(`/api/feedbacks/${feedbackId}`)
-        .set("Authorization", "Bearer dummy-token");
+        .set(authHeader);
 
       expect(response.status).toBe(500);
       expect(response.body).toEqual({
