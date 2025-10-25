@@ -36,7 +36,13 @@ const getDashboardStatistics = async (req: Request, res: Response) => {
 };
 
 const getDashboardCurrentProjects = async (req: Request, res: Response) => {
-  const projects = await prisma.project.findMany({
+  const project = await prisma.project.findFirst({
+    where: {
+      status: "active",
+    },
+    orderBy: {
+      due_date: "asc",
+    },
     select: {
       id: true,
       title: true,
@@ -44,65 +50,48 @@ const getDashboardCurrentProjects = async (req: Request, res: Response) => {
       priority: true,
       status: true,
       duration: true,
-      start_date: true,
       due_date: true,
       _count: {
-        select: {
-          features: true,
-        },
+        select: { features: true },
       },
     },
   });
 
-  const projectsWithScenarioCounts = await Promise.all(
-    projects.map(
-      async (project: {
-        id: number;
-        title: string;
-        description: string | null;
-        priority: unknown;
-        status: unknown;
-        duration: number | null;
-        due_date: Date;
-        _count: { features: number };
-      }) => {
-        const scenarioCount = await prisma.testScenario.count({
-          where: {
-            feature: {
-              project_id: project.id,
-            },
-          },
-        });
+  if (!project) {
+    return responses(res, 404, "No active projects found", null);
+  }
 
-        const dueDate = new Date(project.due_date);
+  const scenarioCount = await prisma.testScenario.count({
+    where: {
+      feature: {
+        project_id: project.id,
+      },
+    },
+  });
 
-        const day = String(dueDate.getDate()).padStart(2, "0");
-        const month = String(dueDate.getMonth() + 1).padStart(2, "0");
-        const year = dueDate.getFullYear();
+  const dueDate = new Date(project.due_date);
+  const day = String(dueDate.getDate()).padStart(2, "0");
+  const month = String(dueDate.getMonth() + 1).padStart(2, "0");
+  const year = dueDate.getFullYear();
+  const formattedDueDate = `${day}/${month}/${year}`;
 
-        const formattedDueDate = `${day}/${month}/${year}`;
-
-        return {
-          id: project.id,
-          title: project.title,
-          description: project.description,
-          priority: project.priority,
-          status: project.status,
-          featureCount: project._count.features,
-          testScenarioCount: scenarioCount,
-          duration: project.duration ? `${project.duration} days` : null,
-          due_date: formattedDueDate,
-        };
-      }
-    )
-  );
+  const projectResponse = {
+    id: project.id,
+    title: project.title,
+    description: project.description,
+    priority: project.priority,
+    status: project.status,
+    featureCount: project._count.features,
+    testScenarioCount: scenarioCount,
+    duration: project.duration ? `${project.duration} days` : null,
+    due_date: formattedDueDate,
+  };
 
   return responses(
     res,
     200,
-    "Current projects successfully retrieved",
-    projectsWithScenarioCounts
+    "Current project successfully retrieved",
+    projectResponse
   );
 };
-
 export { getDashboardStatistics, getDashboardCurrentProjects };

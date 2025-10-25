@@ -51,7 +51,10 @@ export const login = async (req: Request, res: Response) => {
     return responses(res, 404, "Pengguna tidak ditemukan", null);
   }
 
-  const isPasswordValid = await bcrypt.compare(password, user.password);
+  const isPasswordValid = await bcrypt.compare(
+    password,
+    user.password ?? "null"
+  );
   if (!isPasswordValid) {
     return responses(res, 401, "Email atau password salah", null);
   }
