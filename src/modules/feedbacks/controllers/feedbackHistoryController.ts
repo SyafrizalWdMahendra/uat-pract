@@ -2,118 +2,228 @@ import { Request, Response } from "express";
 import { responses } from "../../../utils/responses";
 import { prisma } from "../../../prisma/client";
 
-const searchFeedbackHistory = async (req: Request, res: Response) => {
-  const { content, feature, author } = req.query;
+// const searchFeedbackHistory = async (req: Request, res: Response) => {
+//   const { content, feature, author } = req.query;
 
-  let whereClause = {};
-  let selectClause = {};
+//   let whereClause = {};
+//   let selectClause = {};
+
+//   if (content) {
+//     whereClause = {
+//       description: { contains: String(content) },
+//     };
+//     selectClause = {
+//       description: true,
+//       created_at: true,
+//       priority: true,
+//       status: true,
+//       feature: {
+//         select: {
+//           title: true,
+//         },
+//       },
+//       testScenario: {
+//         select: {
+//           code: true,
+//         },
+//       },
+//       user: {
+//         select: {
+//           name: true,
+//         },
+//       },
+//     };
+//   } else if (feature) {
+//     whereClause = {
+//       feature: {
+//         title: { contains: String(feature) },
+//       },
+//     };
+//     selectClause = {
+//       description: true,
+//       created_at: true,
+//       priority: true,
+//       status: true,
+//       feature: {
+//         select: {
+//           title: true,
+//         },
+//       },
+//       testScenario: {
+//         select: {
+//           code: true,
+//         },
+//       },
+//       user: {
+//         select: {
+//           name: true,
+//         },
+//       },
+//     };
+//   } else if (author) {
+//     whereClause = {
+//       user: { name: { contains: String(author) } },
+//     };
+//     selectClause = {
+//       description: true,
+//       created_at: true,
+//       priority: true,
+//       status: true,
+//       feature: {
+//         select: {
+//           title: true,
+//         },
+//       },
+//       testScenario: {
+//         select: {
+//           code: true,
+//         },
+//       },
+//       user: {
+//         select: {
+//           name: true,
+//         },
+//       },
+//     };
+//   } else {
+//     return responses(
+//       res,
+//       400,
+//       "A valid search parameter (content, feature, or author) is required",
+//       null
+//     );
+//   }
+
+//   const searchResult = await prisma.feedback.findMany({
+//     where: whereClause,
+//     select: selectClause,
+//   });
+
+//   if (searchResult.length === 0) {
+//     return responses(
+//       res,
+//       404,
+//       "No feedback history found matching your criteria",
+//       null
+//     );
+//   }
+
+//   return responses(
+//     res,
+//     200,
+//     "Feedback history successfully retrieved",
+//     searchResult
+//   );
+// };
+
+const searchFeedbackHistory = async (req: Request, res: Response) => {
+  // Ambil *semua* parameter yang mungkin
+  const { content, feature, author, status, priority } = req.query;
+
+  // Tentukan klausa select sekali saja (DRY - Don't Repeat Yourself)
+  const selectClause = {
+    id: true, // Selalu sertakan ID untuk key di React
+    description: true,
+    created_at: true,
+    priority: true,
+    status: true,
+    feature: {
+      select: {
+        title: true,
+      },
+    },
+    testScenario: {
+      select: {
+        code: true,
+      },
+    },
+    user: {
+      select: {
+        name: true,
+      },
+    },
+  };
+
+  // Gunakan objek 'where' dinamis
+  let whereClause: any = {
+    // 'AND' memastikan semua kondisi yang diberikan harus terpenuhi
+    AND: [],
+  };
 
   if (content) {
-    whereClause = {
-      description: { contains: String(content) },
-    };
-    selectClause = {
-      description: true,
-      created_at: true,
-      priority: true,
-      status: true,
-      feature: {
-        select: {
-          title: true,
-        },
-      },
-      testScenario: {
-        select: {
-          code: true,
-        },
-      },
-      user: {
-        select: {
-          name: true,
-        },
-      },
-    };
-  } else if (feature) {
-    whereClause = {
-      feature: {
-        title: { contains: String(feature) },
-      },
-    };
-    selectClause = {
-      description: true,
-      created_at: true,
-      priority: true,
-      status: true,
-      feature: {
-        select: {
-          title: true,
-        },
-      },
-      testScenario: {
-        select: {
-          code: true,
-        },
-      },
-      user: {
-        select: {
-          name: true,
-        },
-      },
-    };
-  } else if (author) {
-    whereClause = {
-      user: { name: { contains: String(author) } },
-    };
-    selectClause = {
-      description: true,
-      created_at: true,
-      priority: true,
-      status: true,
-      feature: {
-        select: {
-          title: true,
-        },
-      },
-      testScenario: {
-        select: {
-          code: true,
-        },
-      },
-      user: {
-        select: {
-          name: true,
-        },
-      },
-    };
-  } else {
-    return responses(
-      res,
-      400,
-      "A valid search parameter (content, feature, or author) is required",
-      null
-    );
+    whereClause.AND.push({
+      description: { contains: String(content) }, // <-- Hapus 'mode'
+    });
   }
 
-  const searchResult = await prisma.feedback.findMany({
-    where: whereClause,
-    select: selectClause,
-  });
-
-  if (searchResult.length === 0) {
-    return responses(
-      res,
-      404,
-      "No feedback history found matching your criteria",
-      null
-    );
+  if (feature) {
+    // Ganti ini ke 'featureId' seperti yang kita bahas di error 500 sebelumnya
+    whereClause.AND.push({
+      featureId: { equals: String(feature) },
+      // Jika featureId adalah angka, gunakan:
+      // featureId: { equals: parseInt(String(feature)) }
+    });
   }
 
-  return responses(
-    res,
-    200,
-    "Feedback history successfully retrieved",
-    searchResult
-  );
+  if (author) {
+    whereClause.AND.push({
+      user: {
+        name: { contains: String(author) }, // <-- Hapus 'mode'
+      },
+    });
+  }
+
+  if (status) {
+    whereClause.AND.push({
+      status: { equals: String(status) },
+    });
+  }
+
+  if (priority) {
+    whereClause.AND.push({
+      priority: { equals: String(priority) },
+    });
+  }
+
+  // Jika tidak ada filter sama sekali, array 'AND' akan kosong,
+  // yang berarti Prisma akan mengembalikan *semua* data.
+  // Ini lebih baik daripada mengembalikan error 400.
+
+  // Jika array AND kosong, kita bisa hapus agar query lebih bersih
+  if (whereClause.AND.length === 0) {
+    whereClause = {};
+  }
+
+  try {
+    const searchResult = await prisma.feedback.findMany({
+      where: whereClause,
+      select: selectClause,
+      orderBy: {
+        created_at: "desc", // Tambahkan pengurutan
+      },
+    });
+
+    // Tidak perlu mengembalikan 404 jika hasil kosong.
+    // Mengembalikan array kosong adalah respons yang valid dan diharapkan.
+    // if (searchResult.length === 0) {
+    //   return responses(
+    //     res,
+    //     404,
+    //     "No feedback history found matching your criteria",
+    //     null
+    //   );
+    // }
+
+    return responses(
+      res,
+      200,
+      "Feedback history successfully retrieved",
+      searchResult
+    );
+  } catch (error) {
+    console.error("Error searching feedback:", error);
+    return responses(res, 500, "Internal server error", null);
+  }
 };
 
 const getFeedbackHistoryById = async (req: Request, res: Response) => {
@@ -165,36 +275,36 @@ const getFeedbackHistoryById = async (req: Request, res: Response) => {
 };
 
 const getFeedbackHistory = async (req: Request, res: Response) => {
-  const feedbackHistories = await prisma.feedback.findMany({
-    select: {
-      status: true,
-      priority: true,
-      description: true,
-      created_at: true,
-      user: {
-        select: {
-          name: true,
-        },
-      },
-      testScenario: {
-        select: {
-          code: true,
-        },
-      },
-      feature: {
-        select: {
-          title: true,
-        },
-      },
-    },
-  });
+  const { projectId } = req.query;
 
-  return responses(
-    res,
-    200,
-    "Feedback Histories successfully retrivied",
-    feedbackHistories
-  );
+  if (!projectId) {
+    return res.status(400).json({ message: "projectId diperlukan" });
+  }
+
+  try {
+    const feedbacks = await prisma.feedback.findMany({
+      where: {
+        project_id: Number(projectId),
+      },
+      include: {
+        user: { select: { name: true } },
+        testScenario: { select: { code: true } },
+        feature: { select: { title: true } },
+      },
+      orderBy: {
+        created_at: "desc",
+      },
+    });
+
+    res.status(200).json({
+      payload: {
+        message: "Feedback Histories successfully retrieved",
+        data: feedbacks,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Gagal mengambil data", error });
+  }
 };
 
 const deleteFeedbackHistory = async (req: Request, res: Response) => {

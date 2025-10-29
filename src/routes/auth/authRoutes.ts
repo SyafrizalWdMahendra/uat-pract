@@ -3,7 +3,10 @@ import {
   register,
   login,
 } from "../../modules/auth/controllers/authControllers";
-import { getUsers } from "../../modules/auth/controllers/userControllers";
+import {
+  deleteUser,
+  getUsers,
+} from "../../modules/auth/controllers/userControllers";
 import {
   oauthController,
   redirectToGoogle,
@@ -15,6 +18,7 @@ const router = Router();
 router.post("/register", register);
 router.post("/login", login);
 router.get("/getUsers", getUsers);
+router.delete("/deleteUsers/:id", deleteUser);
 // Rute untuk memulai login
 // Frontend akan mengarah ke sini
 router.get("/auth/google", redirectToGoogle);

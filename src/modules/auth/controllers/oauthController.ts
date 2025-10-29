@@ -85,9 +85,8 @@ export const oauthController = async (req: Request, res: Response) => {
     res.cookie("token", jwtToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "lax",
       maxAge: 24 * 60 * 60 * 1000,
-      domain: "localhost",
     });
 
     res.redirect(`${process.env.FRONTEND_URL}/dashboards`);
