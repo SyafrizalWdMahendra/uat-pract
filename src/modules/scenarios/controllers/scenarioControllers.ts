@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import { scenarioSchema } from "../dto/scenarioDto";
 import { responses } from "../../../utils/responses";
 import { prisma } from "../../../prisma/client";
-import { scenarioDocsSchema } from "../dto/scenarioDocsDto.";
 
 const createScenarios = async (req: Request, res: Response) => {
   const scenarioValidation = scenarioSchema.parse(req.body);
@@ -66,14 +65,25 @@ const deleteScenarios = async (req: Request, res: Response) => {
 };
 
 const getScenarioDocs = async (req: Request, res: Response) => {
-  const scenarios = await prisma.testScenarioDocs.findMany({
-    select: {
-      id: true,
-      project_id: true,
-      doc_url: true,
-    },
+  const projectId = Number(req.params.id);
+  if (isNaN(projectId)) {
+    return responses(res, 400, "Invalid project ID", null);
+  }
+
+  const scenarios = await prisma.testScenarioDocs.findFirst({
+    where: { project_id: projectId },
   });
-  return responses(res, 200, "Scenario docs successfully retrivied", scenarios);
+
+  if (!scenarios) {
+    return responses(
+      res,
+      404,
+      "Scenario document not found for this project.",
+      null
+    );
+  }
+
+  return responses(res, 200, "Scenario docs successfully retrieved", scenarios);
 };
 
 export {

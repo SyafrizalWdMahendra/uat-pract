@@ -175,7 +175,7 @@ const getFeedbackHistory = async (req: Request, res: Response) => {
       },
       include: {
         user: { select: { name: true } },
-        testScenario: { select: { code: true } },
+        testScenario: { select: { code: true, test_case: true } },
         feature: { select: { title: true } },
       },
       orderBy: {

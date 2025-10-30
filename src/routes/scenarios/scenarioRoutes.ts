@@ -11,7 +11,7 @@ const router = Router();
 
 router.post("/scenarios", createScenarios);
 router.get("/scenarios", getScenarios);
-router.get("/scenarioDocs", getScenarioDocs);
+router.get("/scenarioDocs/:id", getScenarioDocs);
 router.patch("/scenarios/:id", updateScenarios);
 router.delete("/scenarios/:id", deleteScenarios);
 
