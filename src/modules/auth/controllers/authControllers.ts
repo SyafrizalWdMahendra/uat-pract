@@ -72,3 +72,49 @@ export const login = async (req: Request, res: Response) => {
 
   return responses(res, 200, "Login berhasil", { token });
 };
+
+export const googleLogin = async (req: Request, res: Response) => {
+  try {
+    const { email, name } = req.body;
+
+    if (!email || !name) {
+      return responses(res, 400, "Email dan nama wajib diisi dari Google", null);
+    }
+
+    let user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          name,
+          email,
+          password: "",
+          avatar: null,
+          role: "admin",
+        },
+      });
+    }
+
+    if (!user) {
+      return responses(res, 500, "Gagal membuat user baru", null);
+    }
+
+    const tokenPayload = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    };
+
+    const secret = process.env.JWT_SECRET!;
+    const expiresIn = "1h";
+
+    const token = jwt.sign(tokenPayload, secret, { expiresIn });
+
+    return responses(res, 200, "Login Google berhasil", { token });
+  } catch (error) {
+    console.error("Google login error:", error);
+    return responses(res, 500, "Terjadi kesalahan pada server", null);
+  }
+};

@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   register,
   login,
+  googleLogin
 } from "../../modules/auth/controllers/authControllers";
 import {
   deleteUser,
@@ -17,6 +18,7 @@ const router = Router();
 
 router.post("/register", register);
 router.post("/login", login);
+router.post("/loginGoogle", googleLogin);
 router.get("/getUsers", getUsers);
 router.delete("/deleteUsers/:id", deleteUser);
 // Rute untuk memulai login
