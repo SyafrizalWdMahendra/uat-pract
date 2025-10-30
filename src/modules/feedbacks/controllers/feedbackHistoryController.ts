@@ -2,120 +2,6 @@ import { Request, Response } from "express";
 import { responses } from "../../../utils/responses";
 import { prisma } from "../../../prisma/client";
 
-// const searchFeedbackHistory = async (req: Request, res: Response) => {
-//   const { content, feature, author } = req.query;
-
-//   let whereClause = {};
-//   let selectClause = {};
-
-//   if (content) {
-//     whereClause = {
-//       description: { contains: String(content) },
-//     };
-//     selectClause = {
-//       description: true,
-//       created_at: true,
-//       priority: true,
-//       status: true,
-//       feature: {
-//         select: {
-//           title: true,
-//         },
-//       },
-//       testScenario: {
-//         select: {
-//           code: true,
-//         },
-//       },
-//       user: {
-//         select: {
-//           name: true,
-//         },
-//       },
-//     };
-//   } else if (feature) {
-//     whereClause = {
-//       feature: {
-//         title: { contains: String(feature) },
-//       },
-//     };
-//     selectClause = {
-//       description: true,
-//       created_at: true,
-//       priority: true,
-//       status: true,
-//       feature: {
-//         select: {
-//           title: true,
-//         },
-//       },
-//       testScenario: {
-//         select: {
-//           code: true,
-//         },
-//       },
-//       user: {
-//         select: {
-//           name: true,
-//         },
-//       },
-//     };
-//   } else if (author) {
-//     whereClause = {
-//       user: { name: { contains: String(author) } },
-//     };
-//     selectClause = {
-//       description: true,
-//       created_at: true,
-//       priority: true,
-//       status: true,
-//       feature: {
-//         select: {
-//           title: true,
-//         },
-//       },
-//       testScenario: {
-//         select: {
-//           code: true,
-//         },
-//       },
-//       user: {
-//         select: {
-//           name: true,
-//         },
-//       },
-//     };
-//   } else {
-//     return responses(
-//       res,
-//       400,
-//       "A valid search parameter (content, feature, or author) is required",
-//       null
-//     );
-//   }
-
-//   const searchResult = await prisma.feedback.findMany({
-//     where: whereClause,
-//     select: selectClause,
-//   });
-
-//   if (searchResult.length === 0) {
-//     return responses(
-//       res,
-//       404,
-//       "No feedback history found matching your criteria",
-//       null
-//     );
-//   }
-
-//   return responses(
-//     res,
-//     200,
-//     "Feedback history successfully retrieved",
-//     searchResult
-//   );
-// };
-
 const searchFeedbackHistory = async (req: Request, res: Response) => {
   // Ambil *semua* parameter yang mungkin
   const { content, feature, author, status, priority } = req.query;
@@ -247,6 +133,7 @@ const getFeedbackHistoryById = async (req: Request, res: Response) => {
       testScenario: {
         select: {
           code: true,
+          test_case: true,
         },
       },
       feature: {

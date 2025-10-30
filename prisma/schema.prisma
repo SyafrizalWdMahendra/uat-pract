@@ -45,8 +45,9 @@ model Project {
   manager  User @relation("ManagedProjects", fields: [manager_id], references: [id])
   testLead User @relation("LedTestProjects", fields: [test_lead_id], references: [id])
 
-  features  Feature[]
-  feedbacks Feedback[]
+  features         Feature[]
+  feedbacks        Feedback[]
+  testScenarioDocs TestScenarioDocs[]
 }
 
 model Feature {
@@ -71,6 +72,16 @@ model TestScenario {
 
   feature   Feature?   @relation(fields: [feature_id], references: [id])
   feedbacks Feedback[]
+}
+
+model TestScenarioDocs {
+  id         Int      @id @default(autoincrement())
+  project_id Int
+  doc_url    String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  project Project @relation(fields: [project_id], references: [id])
 }
 
 model Feedback {

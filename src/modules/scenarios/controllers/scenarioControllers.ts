@@ -2,9 +2,11 @@ import { Request, Response } from "express";
 import { scenarioSchema } from "../dto/scenarioDto";
 import { responses } from "../../../utils/responses";
 import { prisma } from "../../../prisma/client";
+import { scenarioDocsSchema } from "../dto/scenarioDocsDto.";
 
 const createScenarios = async (req: Request, res: Response) => {
   const scenarioValidation = scenarioSchema.parse(req.body);
+
   const scenarios = await prisma.testScenario.create({
     data: {
       ...scenarioValidation,
@@ -63,4 +65,21 @@ const deleteScenarios = async (req: Request, res: Response) => {
   return responses(res, 200, "Scenario successfully deleted", null);
 };
 
-export { createScenarios, getScenarios, updateScenarios, deleteScenarios };
+const getScenarioDocs = async (req: Request, res: Response) => {
+  const scenarios = await prisma.testScenarioDocs.findMany({
+    select: {
+      id: true,
+      project_id: true,
+      doc_url: true,
+    },
+  });
+  return responses(res, 200, "Scenario docs successfully retrivied", scenarios);
+};
+
+export {
+  createScenarios,
+  getScenarios,
+  updateScenarios,
+  deleteScenarios,
+  getScenarioDocs,
+};

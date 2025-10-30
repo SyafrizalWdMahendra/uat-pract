@@ -2,7 +2,8 @@ import { Request, Response } from "express";
 import { projectSchema } from "../dto/projectDto";
 import { responses } from "../../../utils/responses";
 import { prisma } from "../../../prisma/client";
-import { type ProjectStatus } from "@prisma/client";
+import { Prisma, type ProjectStatus } from "@prisma/client";
+import { scenarioDocsSchema } from "../../scenarios/dto/scenarioDocsDto.";
 
 const formatDate = (date: Date | null): string | null => {
   if (!date) return null;
@@ -21,6 +22,7 @@ interface FeatureWithScenarios {
 
 const createProject = async (req: Request, res: Response) => {
   const parsed = projectSchema.parse(req.body);
+  const scenarioDocsValidation = scenarioDocsSchema.parse(req.body);
 
   const start = new Date(parsed.start_date);
   const due = new Date(parsed.due_date);
@@ -51,7 +53,7 @@ const createProject = async (req: Request, res: Response) => {
     );
   }
 
-  const projects = await prisma.project.create({
+  const createdProject = await prisma.project.create({
     data: {
       manager: { connect: { id: manager.id } },
       testLead: { connect: { id: testLead.id } },
@@ -65,7 +67,17 @@ const createProject = async (req: Request, res: Response) => {
     },
   });
 
-  return responses(res, 201, "Project created successfully", projects);
+  const scenarioDocs = await prisma.testScenarioDocs.create({
+    data: {
+      project_id: createdProject.id,
+      doc_url: scenarioDocsValidation.doc_url,
+    },
+  });
+
+  return responses(res, 201, "Project created successfully", {
+    project: [createdProject],
+    scenarioDocsInfo: scenarioDocs,
+  });
 };
 
 const getProject = async (req: Request, res: Response) => {
@@ -75,14 +87,18 @@ const getProject = async (req: Request, res: Response) => {
 
 const updateProject = async (req: Request, res: Response) => {
   const projectId = Number(req.params.id);
+
   const parsed = projectSchema.parse(req.body);
+  const scenarioDocsValidation = scenarioDocsSchema.parse(req.body);
+  const start = parsed.start_date ? new Date(parsed.start_date) : null;
+  const due = parsed.due_date ? new Date(parsed.due_date) : null;
+  let duration: number | null = null;
 
-  const start = new Date(parsed.start_date ?? "");
-  const due = new Date(parsed.due_date ?? "");
-
-  const duration = Math.ceil(
-    (due.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
-  );
+  if (start && due && !isNaN(start.getTime()) && !isNaN(due.getTime())) {
+    duration = Math.ceil(
+      (due.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+    );
+  }
 
   const { manager_id, test_lead_id, ...projectData } = parsed;
 
@@ -109,44 +125,68 @@ const updateProject = async (req: Request, res: Response) => {
     );
   }
 
-  const updatedProject = await prisma.project.update({
-    where: { id: projectId },
-    data: {
-      manager: { connect: { id: manager.id } },
-      testLead: { connect: { id: testLead.id } },
-      title: projectData.title,
-      description: projectData.description,
-      priority: projectData.priority,
-      status: projectData.status as ProjectStatus,
-      start_date: start,
-      due_date: due,
-      duration: duration || null,
-    },
-  });
+  const [updatedProject, updatedScenarioDocs] = await prisma.$transaction([
+    prisma.project.update({
+      where: { id: projectId },
+      data: {
+        manager: { connect: { id: manager.id } },
+        testLead: { connect: { id: testLead.id } },
+        title: projectData.title,
+        description: projectData.description,
+        priority: projectData.priority,
+        status: projectData.status as ProjectStatus,
+        duration: duration,
+      },
+    }),
 
-  return responses(res, 200, "Project updated successfully", updatedProject);
+    prisma.testScenarioDocs.updateMany({
+      where: { project_id: projectId },
+      data: {
+        doc_url: scenarioDocsValidation.doc_url,
+      },
+    }),
+  ]);
+
+  return responses(res, 200, "Project updated successfully", {
+    project: updatedProject,
+    scenarioDocsInfo: updatedScenarioDocs,
+  });
 };
 
 const deleteProject = async (req: Request, res: Response) => {
-  const id = Number(req.params.id);
+  const projectId = Number(req.params.id);
 
-  if (isNaN(id)) {
-    return responses(res, 400, "Invalid project ID", null);
+  if (isNaN(projectId)) {
+    return responses(res, 400, "Project ID tidak valid.", null);
   }
 
-  const existingProject = await prisma.project.findUnique({
-    where: { id },
-  });
+  try {
+    await prisma.$transaction([
+      prisma.feedback.deleteMany({
+        where: { project_id: projectId },
+      }),
 
-  if (!existingProject) {
-    return responses(res, 404, "Project not found", null);
+      prisma.testScenarioDocs.deleteMany({
+        where: { project_id: projectId },
+      }),
+      prisma.feature.deleteMany({
+        where: { project_id: projectId },
+      }),
+      prisma.project.delete({
+        where: { id: projectId },
+      }),
+    ]);
+
+    return responses(res, 200, "Project berhasil dihapus.", null);
+  } catch (error) {
+    console.error("Gagal menghapus project:", error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2025") {
+        return responses(res, 404, "Project tidak ditemukan.", null);
+      }
+    }
+    return responses(res, 500, "Terjadi kesalahan pada server.", error);
   }
-
-  await prisma.project.delete({
-    where: { id },
-  });
-
-  return responses(res, 200, "Project deleted successfully", null);
 };
 
 const getProjectInformation = async (req: Request, res: Response) => {
