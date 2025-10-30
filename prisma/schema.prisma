@@ -34,8 +34,8 @@ model Project {
   test_lead_id Int
   title        String
   description  String?
-  priority     ProjectPriority
-  status       ProjectStatus
+  priority     ProjectPriority 
+  status       ProjectStatus   
   start_date   DateTime
   due_date     DateTime
   duration     Int?
@@ -60,6 +60,8 @@ model Feature {
   project       Project        @relation(fields: [project_id], references: [id])
   testScenarios TestScenario[]
   feedbacks     Feedback[]
+
+  @@unique([title, project_id], name: "title_project_id_unique")
 }
 
 model TestScenario {
