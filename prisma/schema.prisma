@@ -76,7 +76,7 @@ model TestScenario {
 
 model TestScenarioDocs {
   id         Int      @id @default(autoincrement())
-  project_id Int
+  project_id Int      @unique
   doc_url    String
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
