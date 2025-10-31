@@ -15,22 +15,22 @@ async function seedUsers() {
   const hashedPassword = await hash("SeedPassword123!", 10);
 
   const manager = await prisma.user.upsert({
-    where: { email: "manager.seed@example.com" },
+    where: { email: "manager.seed@gmail.com" },
     update: {},
     create: {
       name: "Manager",
-      email: "manager.seed@example.com",
+      email: "manager.seed@gmail.com",
       password: hashedPassword,
       role: "manager",
     },
   });
 
   const testLead = await prisma.user.upsert({
-    where: { email: "testlead.seed@example.com" },
+    where: { email: "testlead.seed@gmail.com" },
     update: {},
     create: {
       name: "Test Lead",
-      email: "testlead.seed@example.com",
+      email: "testlead.seed@gmail.com",
       password: hashedPassword,
       role: "test_lead",
     },

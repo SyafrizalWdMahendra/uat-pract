@@ -33,7 +33,6 @@ export const redirectToGoogle = (req: Request, res: Response) => {
 
 /**
  * Controller untuk menangani callback dari Google OAuth.
- * Ini adalah implementasi untuk `oauthController`.
  */
 export const oauthController = async (req: Request, res: Response) => {
   const { code } = req.query;
@@ -77,21 +76,14 @@ export const oauthController = async (req: Request, res: Response) => {
     }
 
     const jwtToken = jwt.sign(
-      { userId: user.id, email: user.email },
+      { userId: user.id, email: user.email, name: user.name },
       process.env.JWT_SECRET!,
       { expiresIn: "1d" }
     );
 
-    res.cookie("token", jwtToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 24 * 60 * 60 * 1000,
-    });
-
-    res.redirect(`${process.env.FRONTEND_URL}/dashboards`);
+    res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${jwtToken}`);
   } catch (error) {
     console.error("Error pada Google OAuth callback:", error);
-    res.status(500).send("Autentikasi gagal.");
+    res.redirect(`${process.env.FRONTEND_URL}/login?error=auth_failed`);
   }
 };

@@ -127,6 +127,7 @@ const getFeedbackHistoryById = async (req: Request, res: Response) => {
       created_at: true,
       user: {
         select: {
+          id: true,
           name: true,
         },
       },
@@ -174,7 +175,7 @@ const getFeedbackHistory = async (req: Request, res: Response) => {
         project_id: Number(projectId),
       },
       include: {
-        user: { select: { name: true } },
+        user: { select: { id: true, name: true } },
         testScenario: { select: { code: true, test_case: true } },
         feature: { select: { title: true } },
       },

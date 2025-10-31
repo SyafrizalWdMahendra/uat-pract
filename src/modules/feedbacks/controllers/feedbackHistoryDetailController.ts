@@ -6,6 +6,7 @@ import { type Prisma, ProjectPriority } from "@prisma/client";
 
 const getFeedHistoryDetails = async (req: Request, res: Response) => {
   const feedHistoryId = Number(req.params.id);
+
   const feedHistories = await prisma.feedback.findUnique({
     where: { id: feedHistoryId },
     select: {
@@ -21,6 +22,7 @@ const getFeedHistoryDetails = async (req: Request, res: Response) => {
       updated_at: true,
       user: {
         select: {
+          id: true,
           name: true,
         },
       },
