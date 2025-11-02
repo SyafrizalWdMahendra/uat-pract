@@ -133,12 +133,14 @@ const getFeedbackHistoryById = async (req: Request, res: Response) => {
       },
       testScenario: {
         select: {
+          id: true,
           code: true,
           test_case: true,
         },
       },
       feature: {
         select: {
+          id: true,
           title: true,
         },
       },
