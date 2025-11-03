@@ -141,6 +141,7 @@ enum FeedbackPriority {
   low
   medium
   high
+  critical
 }
 
 enum FeedbackStatus {
