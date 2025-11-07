@@ -105,7 +105,7 @@ model Feedback {
 }
 
 enum Role {
-  admin
+  users
   test_lead
   manager
 }

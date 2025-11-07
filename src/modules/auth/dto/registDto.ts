@@ -1,6 +1,6 @@
 import z from "zod";
 
-const userRole = z.enum(["admin", "test_lead", "manager"]);
+const userRole = z.enum(["users", "test_lead", "manager"]);
 
 export const registerSchema = z.object({
   name: z

@@ -70,7 +70,7 @@ export const oauthController = async (req: Request, res: Response) => {
           email: email,
           name: name,
           avatar: picture,
-          role: "manager",
+          role: "users",
         },
       });
     }

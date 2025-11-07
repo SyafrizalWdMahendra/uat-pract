@@ -78,7 +78,12 @@ export const googleLogin = async (req: Request, res: Response) => {
     const { email, name } = req.body;
 
     if (!email || !name) {
-      return responses(res, 400, "Email dan nama wajib diisi dari Google", null);
+      return responses(
+        res,
+        400,
+        "Email dan nama wajib diisi dari Google",
+        null
+      );
     }
 
     let user = await prisma.user.findUnique({
@@ -92,7 +97,7 @@ export const googleLogin = async (req: Request, res: Response) => {
           email,
           password: "",
           avatar: null,
-          role: "admin",
+          role: "users",
         },
       });
     }
