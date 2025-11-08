@@ -21,6 +21,15 @@ const app = (0, express_1.default)();
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
+app.get("/health", (req, res) => {
+    res.json({
+        status: "ok",
+        timestamp: new Date().toISOString(),
+    });
+});
+app.get("/", (req, res) => {
+    res.json({ message: "API is running" });
+});
 app.use("/api", authRoutes_1.default);
 app.use("/api", dashboardRoutes_1.default);
 app.use("/api", token_1.authenticateToken, feedbackHistoryDetailRoutes_1.default);
