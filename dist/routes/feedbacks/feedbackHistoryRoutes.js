@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const feedbackHistoryController_1 = require("../../modules/feedbacks/controllers/feedbackHistoryController");
+const router = (0, express_1.Router)();
+router.get("/feedback-history/search", feedbackHistoryController_1.searchFeedbackHistory);
+router.get("/feedback-history/:id", feedbackHistoryController_1.getFeedbackHistoryById);
+router.get("/feedback-history", feedbackHistoryController_1.getFeedbackHistory);
+router.delete("/feedback-history/:id", feedbackHistoryController_1.deleteFeedbackHistory);
+exports.default = router;

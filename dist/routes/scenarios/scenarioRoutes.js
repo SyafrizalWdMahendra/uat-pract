@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const scenarioControllers_1 = require("../../modules/scenarios/controllers/scenarioControllers");
+const router = (0, express_1.Router)();
+router.post("/scenarios", scenarioControllers_1.createScenarios);
+router.get("/scenarios", scenarioControllers_1.getScenarios);
+router.get("/scenarioDocs/:id", scenarioControllers_1.getScenarioDocs);
+router.patch("/scenarios/:id", scenarioControllers_1.updateScenarios);
+router.delete("/scenarios/:id", scenarioControllers_1.deleteScenarios);
+exports.default = router;
