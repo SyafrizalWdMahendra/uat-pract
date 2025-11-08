@@ -17,32 +17,19 @@ const createFeature = async (req: Request, res: Response) => {
 };
 
 const getFeatures = async (req: Request, res: Response) => {
-  // 1. Ambil 'projectId' dari query string.
   const { projectId } = req.query;
 
-  // 2. Validasi sederhana: Jika tidak ada projectId, kembalikan array kosong.
-  //    Atau kirim error jika Anda mau.
   if (!projectId || typeof projectId !== "string") {
-    // Anda bisa juga mengirim error 400 di sini
     return responses(res, 200, "No projectId provided", []);
   }
 
-  // 3. Konversi projectId ke angka.
   const idProject = parseInt(projectId, 10);
-
-  // // 4. Validasi jika 'projectId' bukan angka (misal, "abc")
-  // if (isNaN(idProject)) {
-  //   return responses(res, 400, "Invalid projectId: Must be a number");
-  // }
-
-  // 5. Temukan semua features yang cocok dengan project_id
   const features = await prisma.feature.findMany({
     where: {
-      project_id: idProject, // Pastikan 'project_id' adalah nama kolom di database Anda
+      project_id: idProject,
     },
   });
 
-  // 6. Kembalikan data yang ditemukan
   return responses(res, 200, "Features successfully retrieved", features);
 };
 

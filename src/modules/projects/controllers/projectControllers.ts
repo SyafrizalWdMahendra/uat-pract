@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import { projectSchema } from "../dto/projectDto";
 import { responses } from "../../../utils/responses";
 import { prisma } from "../../../prisma/client";
-import { Prisma, type ProjectStatus } from "@prisma/client";
 import { scenarioDocsSchema } from "../../scenarios/dto/scenarioDocsDto.";
 
 const formatDate = (date: Date | null): string | null => {
@@ -60,7 +59,7 @@ const createProject = async (req: Request, res: Response) => {
       title: projectData.title,
       description: projectData.description,
       priority: projectData.priority,
-      status: projectData.status as ProjectStatus,
+      status: projectData.status,
       start_date: start,
       due_date: due,
       duration: Number(duration) || null,
@@ -88,84 +87,74 @@ const getProject = async (req: Request, res: Response) => {
 const updateProject = async (req: Request, res: Response) => {
   const projectId = Number(req.params.id);
 
-  try {
-    const parsed = projectSchema.parse(req.body);
-    const scenarioDocsValidation = scenarioDocsSchema.parse(req.body);
+  const parsed = projectSchema.parse(req.body);
+  const scenarioDocsValidation = scenarioDocsSchema.parse(req.body);
 
-    // (Logika kalkulasi tanggal Anda sudah benar)
-    const start = parsed.start_date ? new Date(parsed.start_date) : null;
-    const due = parsed.due_date ? new Date(parsed.due_date) : null;
-    let duration: number | null = null;
-    if (start && due && !isNaN(start.getTime()) && !isNaN(due.getTime())) {
-      duration = Math.ceil(
-        (due.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
-      );
-    }
-
-    const { manager_id, test_lead_id, ...projectData } = parsed;
-
-    // (Validasi manager & test lead Anda sudah benar)
-    const [manager, testLead] = await Promise.all([
-      prisma.user.findUnique({ where: { id: manager_id } }),
-      prisma.user.findUnique({ where: { id: test_lead_id } }),
-    ]);
-
-    if (!manager || manager.role !== "manager") {
-      return responses(
-        res,
-        400,
-        "Manager ID tidak valid atau bukan seorang Manager.",
-        null
-      );
-    }
-    if (!testLead || testLead.role !== "test_lead") {
-      return responses(
-        res,
-        400,
-        "Test Lead ID tidak valid atau bukan seorang Test Lead.",
-        null
-      );
-    }
-
-    // --- PERBAIKAN UTAMA ADA DI DALAM TRANSAKSI INI ---
-    const [updatedProject, scenarioDocResult] = await prisma.$transaction([
-      // 1. Update Project (Saya tambahkan start_date dan due_date yang hilang)
-      prisma.project.update({
-        where: { id: projectId },
-        data: {
-          manager: { connect: { id: manager.id } },
-          testLead: { connect: { id: testLead.id } },
-          title: projectData.title,
-          description: projectData.description,
-          priority: projectData.priority,
-          status: projectData.status as ProjectStatus,
-          duration: duration,
-        },
-      }),
-
-      prisma.testScenarioDocs.upsert({
-        where: {
-          project_id: projectId,
-        },
-        update: {
-          doc_url: scenarioDocsValidation.doc_url,
-        },
-        create: {
-          project_id: projectId,
-          doc_url: scenarioDocsValidation.doc_url,
-        },
-      }),
-    ]);
-
-    return responses(res, 200, "Project updated successfully", {
-      project: updatedProject,
-      scenarioDocs: scenarioDocResult, // Ganti nama agar lebih jelas
-    });
-  } catch (error) {
-    // Menangkap error Zod atau Prisma
-    console.error("Gagal mengupdate project:", error);
-    return responses(res, 400, "Gagal mengupdate project", error);
+  const start = parsed.start_date ? new Date(parsed.start_date) : null;
+  const due = parsed.due_date ? new Date(parsed.due_date) : null;
+  let duration: number | null = null;
+  if (start && due && !isNaN(start.getTime()) && !isNaN(due.getTime())) {
+    duration = Math.ceil(
+      (due.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+    );
   }
+
+  const { manager_id, test_lead_id, ...projectData } = parsed;
+
+  const [manager, testLead] = await Promise.all([
+    prisma.user.findUnique({ where: { id: manager_id } }),
+    prisma.user.findUnique({ where: { id: test_lead_id } }),
+  ]);
+
+  if (!manager || manager.role !== "manager") {
+    return responses(
+      res,
+      400,
+      "Manager ID tidak valid atau bukan seorang Manager.",
+      null
+    );
+  }
+  if (!testLead || testLead.role !== "test_lead") {
+    return responses(
+      res,
+      400,
+      "Test Lead ID tidak valid atau bukan seorang Test Lead.",
+      null
+    );
+  }
+
+  const [updatedProject, scenarioDocResult] = await prisma.$transaction([
+    prisma.project.update({
+      where: { id: projectId },
+      data: {
+        manager: { connect: { id: manager.id } },
+        testLead: { connect: { id: testLead.id } },
+        title: projectData.title,
+        description: projectData.description,
+        priority: projectData.priority,
+        status: projectData.status,
+        duration: duration,
+      },
+    }),
+
+    prisma.testScenarioDocs.upsert({
+      where: {
+        project_id: projectId,
+      },
+      update: {
+        doc_url: scenarioDocsValidation.doc_url,
+      },
+      create: {
+        project_id: projectId,
+        doc_url: scenarioDocsValidation.doc_url,
+      },
+    }),
+  ]);
+
+  return responses(res, 200, "Project updated successfully", {
+    project: updatedProject,
+    scenarioDocs: scenarioDocResult,
+  });
 };
 
 const deleteProject = async (req: Request, res: Response) => {
@@ -175,33 +164,23 @@ const deleteProject = async (req: Request, res: Response) => {
     return responses(res, 400, "Project ID tidak valid.", null);
   }
 
-  try {
-    await prisma.$transaction([
-      prisma.feedback.deleteMany({
-        where: { project_id: projectId },
-      }),
+  await prisma.$transaction([
+    prisma.feedback.deleteMany({
+      where: { project_id: projectId },
+    }),
 
-      prisma.testScenarioDocs.deleteMany({
-        where: { project_id: projectId },
-      }),
-      prisma.feature.deleteMany({
-        where: { project_id: projectId },
-      }),
-      prisma.project.delete({
-        where: { id: projectId },
-      }),
-    ]);
+    prisma.testScenarioDocs.deleteMany({
+      where: { project_id: projectId },
+    }),
+    prisma.feature.deleteMany({
+      where: { project_id: projectId },
+    }),
+    prisma.project.delete({
+      where: { id: projectId },
+    }),
+  ]);
 
-    return responses(res, 200, "Project berhasil dihapus.", null);
-  } catch (error) {
-    console.error("Gagal menghapus project:", error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2025") {
-        return responses(res, 404, "Project tidak ditemukan.", null);
-      }
-    }
-    return responses(res, 500, "Terjadi kesalahan pada server.", error);
-  }
+  return responses(res, 200, "Project berhasil dihapus.", null);
 };
 
 const getProjectInformation = async (req: Request, res: Response) => {

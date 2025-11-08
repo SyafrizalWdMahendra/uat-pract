@@ -32,3 +32,5 @@ export const feedbackSchema = z.object({
   priority: feedbackPriority,
   status: feedbackStatus,
 });
+
+export type UpdateFeedbackSchema = z.infer<typeof feedbackSchema>;

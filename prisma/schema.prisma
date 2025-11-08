@@ -121,6 +121,7 @@ enum ProjectStatus {
   active
   inactive
   completed
+  pending
 }
 
 enum TestScenarioStatus {

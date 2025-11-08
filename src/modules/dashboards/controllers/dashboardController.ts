@@ -63,33 +63,44 @@ const getDashboardCurrentProjects = async (req: Request, res: Response) => {
     }
 
     const projectsWithScenarioCounts = await Promise.all(
-      projects.map(async (project) => {
-        const scenarioCount = await prisma.testScenario.count({
-          where: {
-            feature: {
-              project_id: project.id,
+      projects.map(
+        async (project: {
+          id: any;
+          due_date: string | number | Date;
+          title: any;
+          description: any;
+          priority: any;
+          status: any;
+          _count: { features: any };
+          duration: any;
+        }) => {
+          const scenarioCount = await prisma.testScenario.count({
+            where: {
+              feature: {
+                project_id: project.id,
+              },
             },
-          },
-        });
+          });
 
-        const dueDate = new Date(project.due_date);
-        const day = String(dueDate.getDate()).padStart(2, "0");
-        const month = String(dueDate.getMonth() + 1).padStart(2, "0");
-        const year = dueDate.getFullYear();
-        const formattedDueDate = `${day}/${month}/${year}`;
+          const dueDate = new Date(project.due_date);
+          const day = String(dueDate.getDate()).padStart(2, "0");
+          const month = String(dueDate.getMonth() + 1).padStart(2, "0");
+          const year = dueDate.getFullYear();
+          const formattedDueDate = `${day}/${month}/${year}`;
 
-        return {
-          id: project.id,
-          title: project.title,
-          description: project.description,
-          priority: project.priority,
-          status: project.status,
-          featureCount: project._count.features,
-          testScenarioCount: scenarioCount,
-          duration: project.duration ? `${project.duration} days` : null,
-          due_date: formattedDueDate,
-        };
-      })
+          return {
+            id: project.id,
+            title: project.title,
+            description: project.description,
+            priority: project.priority,
+            status: project.status,
+            featureCount: project._count.features,
+            testScenarioCount: scenarioCount,
+            duration: project.duration ? `${project.duration} days` : null,
+            due_date: formattedDueDate,
+          };
+        }
+      )
     );
 
     return responses(
