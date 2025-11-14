@@ -1,8 +1,6 @@
-// file: src/controllers/authController.ts
-
 import { Request, Response } from "express";
 import { OAuth2Client } from "google-auth-library";
-import jwt from "jsonwebtoken";
+import { SignJWT } from "jose";
 import { prisma } from "../../../prisma/client";
 
 const client = new OAuth2Client(
@@ -10,6 +8,14 @@ const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_SECRET,
   process.env.GOOGLE_CALLBACK_URL
 );
+
+const getSecretKey = () => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error("JWT_SECRET tidak diatur di environment variables.");
+  }
+  return new TextEncoder().encode(secret);
+};
 
 /**
  * Controller untuk memulai proses Google Login.
@@ -71,15 +77,24 @@ export const oauthController = async (req: Request, res: Response) => {
           name: name,
           avatar: picture,
           role: "users",
+          password: null,
         },
       });
     }
 
-    const jwtToken = jwt.sign(
-      { userId: user.id, email: user.email, name: user.name },
-      process.env.JWT_SECRET!,
-      { expiresIn: "1d" }
-    );
+    const tokenPayload = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+    };
+
+    const secretKey = getSecretKey();
+    const jwtToken = await new SignJWT(tokenPayload)
+      .setProtectedHeader({ alg: "HS265" })
+      .setIssuedAt()
+      .setExpirationTime("1d")
+      .sign(secretKey);
 
     res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${jwtToken}`);
   } catch (error) {
