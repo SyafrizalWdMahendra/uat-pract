@@ -1,8 +1,12 @@
 import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
+import { jwtVerify } from "jose";
 import { CustomJwtPayload } from "../types/express";
 
-const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
+const authenticateToken = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const secretKey = process.env.JWT_SECRET;
 
   if (!secretKey) {
@@ -17,14 +21,20 @@ const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
     return res.status(401).send("Token dibutuhkan");
   }
 
-  jwt.verify(token, secretKey, (err, user) => {
-    if (err) {
-      return res.status(403).send("Token tidak valid atau kedaluwarsa");
-    }
+  try {
+    const secretKeyBytes = new TextEncoder().encode(secretKey);
 
-    req.user = user as CustomJwtPayload;
+    const { payload } = await jwtVerify(token, secretKeyBytes);
+
+    req.user = payload as CustomJwtPayload;
     next();
-  });
+  } catch (error: any) {
+    console.error(
+      `[authenticateToken] Verifikasi token gagal: ${error.message}`
+    );
+
+    return res.status(403).send("Token tidak valid atau kedaluwarsa");
+  }
 };
 
 export { authenticateToken };
