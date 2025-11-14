@@ -1,21 +1,7 @@
-"use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const supertest_1 = __importDefault(require("supertest"));
-const app_1 = __importDefault(require("../../../app"));
-const client_1 = require("../../../prisma/client");
-const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+import request from "supertest";
+import app from "../../../app.js";
+import { prisma } from "../../../prisma/client.js";
+import jwt from "jsonwebtoken";
 jest.mock("../../../prisma/client", () => ({
     prisma: {
         feature: {
@@ -27,8 +13,11 @@ jest.mock("../../../prisma/client", () => ({
         },
     },
 }));
-jest.mock("jsonwebtoken", () => (Object.assign(Object.assign({}, jest.requireActual("jsonwebtoken")), { verify: jest.fn() })));
-const mockedJwt = jsonwebtoken_1.default;
+jest.mock("jsonwebtoken", () => ({
+    ...jest.requireActual("jsonwebtoken"),
+    verify: jest.fn(),
+}));
+const mockedJwt = jwt;
 describe("testing features", () => {
     beforeEach(() => {
         jest.clearAllMocks();
@@ -51,32 +40,32 @@ describe("testing features", () => {
             project_id: 1,
             title: "Authentication",
         };
-        test("should return feature successfully created with status 201", () => __awaiter(void 0, void 0, void 0, function* () {
-            client_1.prisma.feature.create.mockResolvedValue(featurePayload);
-            const response = yield (0, supertest_1.default)(app_1.default)
+        test("should return feature successfully created with status 201", async () => {
+            prisma.feature.create.mockResolvedValue(featurePayload);
+            const response = await request(app)
                 .post("/api/features")
                 .set("Authorization", "Bearer dummy-token")
                 .send(featurePayload);
             expect(response.status).toBe(201);
             expect(response.body.payload.message).toBe("Feature successfully created");
             expect(response.body.payload.data).toEqual(featurePayload);
-            expect(client_1.prisma.feature.create).toHaveBeenCalledTimes(1);
-            expect(client_1.prisma.feature.create).toHaveBeenCalledWith({
+            expect(prisma.feature.create).toHaveBeenCalledTimes(1);
+            expect(prisma.feature.create).toHaveBeenCalledWith({
                 data: featurePayload,
             });
-        }));
-        test("should return 400 for invalid created feature data (Zod validation)", () => __awaiter(void 0, void 0, void 0, function* () {
-            const invalidPayload = Object.assign(Object.assign({}, featurePayload), { project_id: "1" });
-            const response = yield (0, supertest_1.default)(app_1.default)
+        });
+        test("should return 400 for invalid created feature data (Zod validation)", async () => {
+            const invalidPayload = { ...featurePayload, project_id: "1" };
+            const response = await request(app)
                 .post("/api/features")
                 .set("Authorization", "Bearer dummy-token")
                 .send(invalidPayload);
             expect(response.status).toBe(400);
-        }));
-        test("should return 500 when a database error occurs", () => __awaiter(void 0, void 0, void 0, function* () {
+        });
+        test("should return 500 when a database error occurs", async () => {
             const mockError = new Error("Database connection failed");
-            client_1.prisma.feature.create.mockRejectedValue(mockError);
-            const response = yield (0, supertest_1.default)(app_1.default)
+            prisma.feature.create.mockRejectedValue(mockError);
+            const response = await request(app)
                 .post("/api/features")
                 .set("Authorization", "Bearer dummy-token")
                 .send(featurePayload);
@@ -84,7 +73,7 @@ describe("testing features", () => {
             expect(response.body).toEqual({
                 message: "Something went wrong!",
             });
-        }));
+        });
     });
     // =================================================================
     // ==  TESTS FOR GET FEATURE ==
@@ -94,18 +83,18 @@ describe("testing features", () => {
             project_id: 1,
             title: "Authentication",
         };
-        test("should return 200 and all feature successfully", () => __awaiter(void 0, void 0, void 0, function* () {
-            client_1.prisma.feature.findMany.mockResolvedValue(featurePayload);
-            const response = yield (0, supertest_1.default)(app_1.default)
+        test("should return 200 and all feature successfully", async () => {
+            prisma.feature.findMany.mockResolvedValue(featurePayload);
+            const response = await request(app)
                 .get("/api/features")
                 .set("Authorization", "Bearer dummy-token");
             expect(response.status).toBe(200);
             expect(response.body.payload.message).toBe("Feature successfully retrivied");
-        }));
-        test("should return 500 when a database error occurs", () => __awaiter(void 0, void 0, void 0, function* () {
+        });
+        test("should return 500 when a database error occurs", async () => {
             const mockError = new Error("Database connection failed");
-            client_1.prisma.feature.create.mockRejectedValue(mockError);
-            const response = yield (0, supertest_1.default)(app_1.default)
+            prisma.feature.create.mockRejectedValue(mockError);
+            const response = await request(app)
                 .post("/api/features")
                 .set("Authorization", "Bearer dummy-token")
                 .send(featurePayload);
@@ -113,7 +102,7 @@ describe("testing features", () => {
             expect(response.body).toEqual({
                 message: "Something went wrong!",
             });
-        }));
+        });
     });
     // =================================================================
     // ==  TESTS FOR UPDATE FEATURE ==
@@ -129,33 +118,33 @@ describe("testing features", () => {
             project_id: updatePayload.project_id,
             title: updatePayload.title,
         };
-        test("should update a feature successfully and return 200", () => __awaiter(void 0, void 0, void 0, function* () {
-            client_1.prisma.feature.update.mockResolvedValue(expectedUpdatedFeature);
-            const response = yield (0, supertest_1.default)(app_1.default)
+        test("should update a feature successfully and return 200", async () => {
+            prisma.feature.update.mockResolvedValue(expectedUpdatedFeature);
+            const response = await request(app)
                 .patch(`/api/features/${featureId}`)
                 .set("Authorization", "Bearer dummy-token")
                 .send(updatePayload);
             expect(response.status).toBe(200);
             expect(response.body.payload.message).toBe("Feature successfully updated");
             expect(response.body.payload.data).toEqual(expectedUpdatedFeature);
-            expect(client_1.prisma.feature.update).toHaveBeenCalledTimes(1);
-            expect(client_1.prisma.feature.update).toHaveBeenCalledWith({
+            expect(prisma.feature.update).toHaveBeenCalledTimes(1);
+            expect(prisma.feature.update).toHaveBeenCalledWith({
                 where: { id: featureId },
                 data: updatePayload,
             });
-        }));
-        test("should return 400 for invalid update data (Zod validation)", () => __awaiter(void 0, void 0, void 0, function* () {
-            const invalidPayload = Object.assign(Object.assign({}, updatePayload), { title: null });
-            const response = yield (0, supertest_1.default)(app_1.default)
+        });
+        test("should return 400 for invalid update data (Zod validation)", async () => {
+            const invalidPayload = { ...updatePayload, title: null };
+            const response = await request(app)
                 .patch(`/api/features/${featureId}`)
                 .set("Authorization", "Bearer dummy-token")
                 .send(invalidPayload);
             expect(response.status).toBe(400);
-        }));
-        test("should return 500 when a database error occurs during update", () => __awaiter(void 0, void 0, void 0, function* () {
+        });
+        test("should return 500 when a database error occurs during update", async () => {
             const mockError = new Error("Database update failed");
-            client_1.prisma.feature.update.mockRejectedValue(mockError);
-            const response = yield (0, supertest_1.default)(app_1.default)
+            prisma.feature.update.mockRejectedValue(mockError);
+            const response = await request(app)
                 .patch(`/api/features/${featureId}`)
                 .set("Authorization", "Bearer dummy-token")
                 .send(updatePayload);
@@ -163,7 +152,7 @@ describe("testing features", () => {
             expect(response.body).toEqual({
                 message: "Something went wrong!",
             });
-        }));
+        });
     });
     // =================================================================
     // ==  TESTS FOR DELETE FEATURE ==
@@ -171,52 +160,52 @@ describe("testing features", () => {
     describe("DELETE /api/features/:id", () => {
         const featureId = 1;
         const mockFeature = { id: featureId, title: "Test Feature", project_id: 1 };
-        test("should delete a feature successfully and return 200", () => __awaiter(void 0, void 0, void 0, function* () {
-            client_1.prisma.feature.findUnique.mockResolvedValue(mockFeature);
-            client_1.prisma.feature.delete.mockResolvedValue(mockFeature);
-            const response = yield (0, supertest_1.default)(app_1.default)
+        test("should delete a feature successfully and return 200", async () => {
+            prisma.feature.findUnique.mockResolvedValue(mockFeature);
+            prisma.feature.delete.mockResolvedValue(mockFeature);
+            const response = await request(app)
                 .delete(`/api/features/${featureId}`)
                 .set("Authorization", "Bearer dummy-token");
             expect(response.status).toBe(200);
             expect(response.body.payload.message).toBe("Feature deleted successfully");
             expect(response.body.payload.data).toEqual([]);
-            expect(client_1.prisma.feature.findUnique).toHaveBeenCalledWith({
+            expect(prisma.feature.findUnique).toHaveBeenCalledWith({
                 where: { id: featureId },
             });
-            expect(client_1.prisma.feature.delete).toHaveBeenCalledWith({
+            expect(prisma.feature.delete).toHaveBeenCalledWith({
                 where: { id: featureId },
             });
-        }));
-        test("should return 404 if feature is not found", () => __awaiter(void 0, void 0, void 0, function* () {
-            client_1.prisma.feature.findUnique.mockResolvedValue(null);
-            const response = yield (0, supertest_1.default)(app_1.default)
+        });
+        test("should return 404 if feature is not found", async () => {
+            prisma.feature.findUnique.mockResolvedValue(null);
+            const response = await request(app)
                 .delete(`/api/features/${featureId}`)
                 .set("Authorization", "Bearer dummy-token");
             expect(response.status).toBe(404);
             expect(response.body.payload.message).toBe("Feature not found");
-            expect(client_1.prisma.feature.delete).not.toHaveBeenCalled();
-        }));
-        test("should return 400 for an invalid (NaN) feature ID", () => __awaiter(void 0, void 0, void 0, function* () {
+            expect(prisma.feature.delete).not.toHaveBeenCalled();
+        });
+        test("should return 400 for an invalid (NaN) feature ID", async () => {
             const invalidId = "abc";
-            const response = yield (0, supertest_1.default)(app_1.default)
+            const response = await request(app)
                 .delete(`/api/features/${invalidId}`)
                 .set("Authorization", "Bearer dummy-token");
             expect(response.status).toBe(400);
             expect(response.body.payload.message).toBe("Invalid feature ID");
-            expect(client_1.prisma.feature.findUnique).not.toHaveBeenCalled();
-            expect(client_1.prisma.feature.delete).not.toHaveBeenCalled();
-        }));
-        test("should return 500 if delete operation fails", () => __awaiter(void 0, void 0, void 0, function* () {
-            client_1.prisma.feature.findUnique.mockResolvedValue(mockFeature);
+            expect(prisma.feature.findUnique).not.toHaveBeenCalled();
+            expect(prisma.feature.delete).not.toHaveBeenCalled();
+        });
+        test("should return 500 if delete operation fails", async () => {
+            prisma.feature.findUnique.mockResolvedValue(mockFeature);
             const mockError = new Error("Database delete failed");
-            client_1.prisma.feature.delete.mockRejectedValue(mockError);
-            const response = yield (0, supertest_1.default)(app_1.default)
+            prisma.feature.delete.mockRejectedValue(mockError);
+            const response = await request(app)
                 .delete(`/api/features/${featureId}`)
                 .set("Authorization", "Bearer dummy-token");
             expect(response.status).toBe(500);
             expect(response.body).toEqual({
                 message: "Something went wrong!",
             });
-        }));
+        });
     });
 });

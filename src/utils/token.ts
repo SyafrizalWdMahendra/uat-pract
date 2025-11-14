@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { jwtVerify } from "jose";
-import { CustomJwtPayload } from "../types/express";
+import { CustomJwtPayload } from "../types/express/index.js";
 
 const authenticateToken = async (
   req: Request,
@@ -26,14 +26,17 @@ const authenticateToken = async (
 
     const { payload } = await jwtVerify(token, secretKeyBytes);
 
-    req.user = payload as CustomJwtPayload;
+    req.user = payload as unknown as CustomJwtPayload;
     next();
-  } catch (error: any) {
-    console.error(
-      `[authenticateToken] Verifikasi token gagal: ${error.message}`
-    );
+  } catch (error) { 
+    let errorMessage = "Token tidak valid atau kedaluwarsa";
 
-    return res.status(403).send("Token tidak valid atau kedaluwarsa");
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+
+    console.error(`[authenticateToken] Verifikasi token gagal: ${errorMessage}`);
+    return res.status(403).send(errorMessage);
   }
 };
 

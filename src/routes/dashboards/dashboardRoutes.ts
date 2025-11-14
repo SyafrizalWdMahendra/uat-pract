@@ -2,7 +2,7 @@ import { Router } from "express";
 import {
   getDashboardStatistics,
   getDashboardCurrentProjects,
-} from "../../modules/dashboards/controllers/dashboardController";
+} from "../../modules/dashboards/controllers/dashboardController.js";
 
 const router = Router();
 

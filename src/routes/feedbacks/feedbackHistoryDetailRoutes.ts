@@ -2,7 +2,7 @@ import { Router } from "express";
 import {
   getFeedHistoryDetails,
   updateFeedHistoryDetails,
-} from "../../modules/feedbacks/controllers/feedbackHistoryDetailController";
+} from "../../modules/feedbacks/controllers/feedbackHistoryDetailController.js";
 
 const router = Router();
 

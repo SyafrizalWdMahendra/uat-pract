@@ -4,7 +4,7 @@ import {
   getFeedbackHistory,
   getFeedbackHistoryById,
   deleteFeedbackHistory,
-} from "../../modules/feedbacks/controllers/feedbackHistoryController";
+} from "../../modules/feedbacks/controllers/feedbackHistoryController.js";
 
 const router = Router();
 

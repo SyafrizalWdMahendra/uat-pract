@@ -1,20 +1,18 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = require("express");
-const authControllers_1 = require("../../modules/auth/controllers/authControllers");
-const userControllers_1 = require("../../modules/auth/controllers/userControllers");
-const oauthController_1 = require("../../modules/auth/controllers/oauthController");
+import { Router } from "express";
+import { register, login, googleLogin } from "../../modules/auth/controllers/authControllers.js";
+import { deleteUser, getUsers, } from "../../modules/auth/controllers/userControllers.js";
+import { oauthController, redirectToGoogle, } from "../../modules/auth/controllers/oauthController.js";
 // import { catchAsync } from "../../utils/catchAsync";
-const router = (0, express_1.Router)();
-router.post("/register", authControllers_1.register);
-router.post("/login", authControllers_1.login);
-router.post("/loginGoogle", authControllers_1.googleLogin);
-router.get("/getUsers", userControllers_1.getUsers);
-router.delete("/deleteUsers/:id", userControllers_1.deleteUser);
+const router = Router();
+router.post("/register", register);
+router.post("/login", login);
+router.post("/loginGoogle", googleLogin);
+router.get("/getUsers", getUsers);
+router.delete("/deleteUsers/:id", deleteUser);
 // Rute untuk memulai login
 // Frontend akan mengarah ke sini
-router.get("/auth/google", oauthController_1.redirectToGoogle);
+router.get("/auth/google", redirectToGoogle);
 // Rute callback yang akan dipanggil oleh Google
 // Ini harus sama dengan 'GOOGLE_CALLBACK_URL' di .env Anda
-router.get("/auth/google/callback", oauthController_1.oauthController);
-exports.default = router;
+router.get("/auth/google/callback", oauthController);
+export default router;

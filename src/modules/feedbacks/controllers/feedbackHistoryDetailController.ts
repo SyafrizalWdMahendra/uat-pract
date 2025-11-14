@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import { updateDetailsSchema } from "../dto/feedbackDetailUpdateDto";
-import { responses } from "../../../utils/responses";
-import { prisma } from "../../../prisma/client";
+import { updateDetailsSchema } from "../dto/feedbackDetailUpdateDto.js";
+import { responses } from "../../../utils/responses.js";
+import { prisma } from "../../../prisma/client.js";
 
 const getFeedHistoryDetails = async (req: Request, res: Response) => {
   const feedHistoryId = Number(req.params.id);

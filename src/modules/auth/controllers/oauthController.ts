@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { OAuth2Client } from "google-auth-library";
 import { SignJWT } from "jose";
-import { prisma } from "../../../prisma/client";
+import { prisma } from "../../../prisma/client.js";
 
 const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,

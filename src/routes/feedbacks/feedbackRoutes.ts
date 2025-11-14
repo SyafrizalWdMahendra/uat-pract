@@ -4,7 +4,7 @@ import {
   deleteFeedbacks,
   getFeedbacks,
   updateFeedbacks,
-} from "../../modules/feedbacks/controllers/feedbackController";
+} from "../../modules/feedbacks/controllers/feedbackController.js";
 
 const router = Router();
 

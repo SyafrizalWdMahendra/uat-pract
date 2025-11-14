@@ -1,28 +1,19 @@
-"use strict";
-// file: src/controllers/authController.ts
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
+import { OAuth2Client } from "google-auth-library";
+import { SignJWT } from "jose";
+import { prisma } from "../../../prisma/client.js";
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, process.env.GOOGLE_CALLBACK_URL);
+const getSecretKey = () => {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+        throw new Error("JWT_SECRET tidak diatur di environment variables.");
+    }
+    return new TextEncoder().encode(secret);
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.oauthController = exports.redirectToGoogle = void 0;
-const google_auth_library_1 = require("google-auth-library");
-const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const client_1 = require("../../../prisma/client");
-const client = new google_auth_library_1.OAuth2Client(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, process.env.GOOGLE_CALLBACK_URL);
 /**
  * Controller untuk memulai proses Google Login.
  * Ini mengarahkan pengguna ke halaman persetujuan Google.
  */
-const redirectToGoogle = (req, res) => {
+export const redirectToGoogle = (req, res) => {
     try {
         const authUrl = client.generateAuthUrl({
             access_type: "offline",
@@ -38,19 +29,18 @@ const redirectToGoogle = (req, res) => {
         res.status(500).send("Gagal memulai autentikasi Google");
     }
 };
-exports.redirectToGoogle = redirectToGoogle;
 /**
  * Controller untuk menangani callback dari Google OAuth.
  */
-const oauthController = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+export const oauthController = async (req, res) => {
     const { code } = req.query;
     if (!code) {
         return res.status(400).send("Otentikasi gagal: Tidak ada kode.");
     }
     try {
-        const { tokens } = yield client.getToken(code);
+        const { tokens } = await client.getToken(code);
         client.setCredentials(tokens);
-        const ticket = yield client.verifyIdToken({
+        const ticket = await client.verifyIdToken({
             idToken: tokens.id_token,
             audience: process.env.GOOGLE_CLIENT_ID,
         });
@@ -61,25 +51,36 @@ const oauthController = (req, res) => __awaiter(void 0, void 0, void 0, function
                 .send("Gagal mendapatkan info pengguna dari Google.");
         }
         const { email, name, picture } = payload;
-        let user = yield client_1.prisma.user.findUnique({
+        let user = await prisma.user.findUnique({
             where: { email },
         });
         if (!user) {
-            user = yield client_1.prisma.user.create({
+            user = await prisma.user.create({
                 data: {
                     email: email,
                     name: name,
                     avatar: picture,
                     role: "users",
+                    password: null,
                 },
             });
         }
-        const jwtToken = jsonwebtoken_1.default.sign({ userId: user.id, email: user.email, name: user.name }, process.env.JWT_SECRET, { expiresIn: "1d" });
+        const tokenPayload = {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+        };
+        const secretKey = getSecretKey();
+        const jwtToken = await new SignJWT(tokenPayload)
+            .setProtectedHeader({ alg: "HS265" })
+            .setIssuedAt()
+            .setExpirationTime("1d")
+            .sign(secretKey);
         res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${jwtToken}`);
     }
     catch (error) {
         console.error("Error pada Google OAuth callback:", error);
         res.redirect(`${process.env.FRONTEND_URL}/login?error=auth_failed`);
     }
-});
-exports.oauthController = oauthController;
+};

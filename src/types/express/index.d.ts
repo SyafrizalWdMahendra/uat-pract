@@ -1,8 +1,12 @@
-import { JwtPayload } from "jsonwebtoken";
+export {};
 
-export interface CustomJwtPayload extends JwtPayload {
+export interface CustomJwtPayload {
   id: number;
+  email: string;
+  name: string;
   role: string;
+  iat?: number; 
+  exp?: number; 
 }
 
 declare global {
