@@ -25,6 +25,18 @@ app.get("/health", (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+app.get("/api/debug-env", (req, res) => {
+  res.json({
+    message: "Membaca env vars...",
+    jwt_secret_snippet: process.env.JWT_SECRET
+      ? process.env.JWT_SECRET.substring(0, 4) +
+        "..." +
+        process.env.JWT_SECRET.slice(-4)
+      : "!! TIDAK DISET !!",
+  });
+});
+
 app.get("/", (req, res) => {
   res.json({ message: "API is running" });
 });
