@@ -48,7 +48,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api", authRoutes);
-app.use("/api", dashboardRoutes);
+app.use("/api", authenticateToken, dashboardRoutes);
 app.use("/api", authenticateToken, feedHistoryDetailRoutes);
 app.use("/api", authenticateToken, projectRoutes);
 app.use("/api", authenticateToken, featureRoutes);
