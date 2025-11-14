@@ -23,6 +23,12 @@ app.get("/health", (req, res) => {
   res.json({
     status: "ok",
     timestamp: new Date().toISOString(),
+
+    DEBUG_JWT_SECRET_SNIPPET: process.env.JWT_SECRET
+      ? process.env.JWT_SECRET.substring(0, 4) +
+        "..." +
+        process.env.JWT_SECRET.slice(-4)
+      : "!! JWT_SECRET TIDAK DITEMUKAN !!",
   });
 });
 
