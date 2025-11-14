@@ -7,6 +7,13 @@ const authenticateToken = async (
   res: Response,
   next: NextFunction
 ) => {
+
+  // 🔥 Tambahkan log disini
+  console.log("====== Incoming Request Headers ======");
+  console.log("Authorization Header:", req.headers["authorization"]);
+  console.log("All Headers:", req.headers);
+  console.log("=====================================");
+
   const secretKey = process.env.JWT_SECRET;
 
   if (!secretKey) {
@@ -36,7 +43,7 @@ const authenticateToken = async (
     }
 
     console.error(`[authenticateToken] Verifikasi token gagal: ${errorMessage}`);
-    return res.status(403).send(errorMessage);
+    return res.status(401).send("Token tidak valid atau kedaluwarsa");
   }
 };
 
