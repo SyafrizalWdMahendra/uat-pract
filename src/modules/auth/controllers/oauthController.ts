@@ -91,7 +91,7 @@ export const oauthController = async (req: Request, res: Response) => {
 
     const secretKey = getSecretKey();
     const jwtToken = await new SignJWT(tokenPayload)
-      .setProtectedHeader({ alg: "HS256" })
+      .setProtectedHeader({ alg: "HS265" })
       .setIssuedAt()
       .setExpirationTime("1d")
       .sign(secretKey);
