@@ -1,6 +1,6 @@
 import request from "supertest";
-import app from "../../../app";
-import { prisma } from "../../../prisma/client";
+import app from "../../../app.js";
+import { prisma } from "../../../prisma/client.js";
 jest.mock("../../../prisma/client", () => ({
     prisma: {
         project: {

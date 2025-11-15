@@ -1,6 +1,6 @@
-import { updateDetailsSchema } from "../dto/feedbackDetailUpdateDto";
-import { responses } from "../../../utils/responses";
-import { prisma } from "../../../prisma/client";
+import { updateDetailsSchema } from "../dto/feedbackDetailUpdateDto.js";
+import { responses } from "../../../utils/responses.js";
+import { prisma } from "../../../prisma/client.js";
 const getFeedHistoryDetails = async (req, res) => {
     const feedHistoryId = Number(req.params.id);
     if (isNaN(feedHistoryId)) {

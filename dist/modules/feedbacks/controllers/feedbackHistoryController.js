@@ -1,5 +1,5 @@
-import { responses } from "../../../utils/responses";
-import { prisma } from "../../../prisma/client";
+import { responses } from "../../../utils/responses.js";
+import { prisma } from "../../../prisma/client.js";
 const searchFeedbackHistory = async (req, res) => {
     const { content, feature, author, status, priority } = req.query;
     const selectClause = {

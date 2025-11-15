@@ -1,6 +1,5 @@
 import { jwtVerify } from "jose";
 const authenticateToken = async (req, res, next) => {
-    // 🔥 Tambahkan log disini
     console.log("====== Incoming Request Headers ======");
     console.log("Authorization Header:", req.headers["authorization"]);
     console.log("All Headers:", req.headers);

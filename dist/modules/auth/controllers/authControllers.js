@@ -1,9 +1,9 @@
 import bcrypt from "bcrypt";
 import { SignJWT } from "jose";
-import { registerSchema } from "../dto/registDto";
-import { loginSchema } from "../dto/loginDto";
-import { responses } from "../../../utils/responses";
-import { prisma } from "../../../prisma/client";
+import { registerSchema } from "../dto/registDto.js";
+import { loginSchema } from "../dto/loginDto.js";
+import { responses } from "../../../utils/responses.js";
+import { prisma } from "../../../prisma/client.js";
 const getSecretKey = () => {
     const secret = process.env.JWT_SECRET;
     if (!secret) {

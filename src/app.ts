@@ -1,15 +1,15 @@
 import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import authRoutes from "./routes/auth/authRoutes";
-import projectRoutes from "./routes/projects/projectRoutes";
-import featureRoutes from "./routes/features/featureRoutes";
-import scenarioRoutes from "./routes/scenarios/scenarioRoutes";
-import feedbackRoutes from "./routes/feedbacks/feedbackRoutes";
-import feedHistoryRoutes from "./routes/feedbacks/feedbackHistoryRoutes";
-import feedHistoryDetailRoutes from "./routes/feedbacks/feedbackHistoryDetailRoutes";
-import dashboardRoutes from "./routes/dashboards/dashboardRoutes";
-import { authenticateToken } from "./utils/token";
+import authRoutes from "./routes/auth/authRoutes.js";
+import projectRoutes from "./routes/projects/projectRoutes.js";
+import featureRoutes from "./routes/features/featureRoutes.js";
+import scenarioRoutes from "./routes/scenarios/scenarioRoutes.js";
+import feedbackRoutes from "./routes/feedbacks/feedbackRoutes.js";
+import feedHistoryRoutes from "./routes/feedbacks/feedbackHistoryRoutes.js";
+import feedHistoryDetailRoutes from "./routes/feedbacks/feedbackHistoryDetailRoutes.js";
+import dashboardRoutes from "./routes/dashboards/dashboardRoutes.js";
+import { authenticateToken } from "./utils/token.js";
 import { ZodError } from "zod";
 dotenv.config();
 

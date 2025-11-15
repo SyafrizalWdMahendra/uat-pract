@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { register, login, googleLogin } from "../../modules/auth/controllers/authControllers";
-import { deleteUser, getUsers, } from "../../modules/auth/controllers/userControllers";
-import { oauthController, redirectToGoogle, } from "../../modules/auth/controllers/oauthController";
+import { register, login, googleLogin } from "../../modules/auth/controllers/authControllers.js";
+import { deleteUser, getUsers, } from "../../modules/auth/controllers/userControllers.js";
+import { oauthController, redirectToGoogle, } from "../../modules/auth/controllers/oauthController.js";
 // import { catchAsync } from "../../utils/catchAsync";
 const router = Router();
 router.post("/register", register);

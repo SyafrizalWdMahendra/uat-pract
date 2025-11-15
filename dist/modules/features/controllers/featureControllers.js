@@ -1,6 +1,6 @@
-import { featureSchema } from "../dto/featureDto";
-import { responses } from "../../../utils/responses";
-import { prisma } from "../../../prisma/client";
+import { featureSchema } from "../dto/featureDto.js";
+import { responses } from "../../../utils/responses.js";
+import { prisma } from "../../../prisma/client.js";
 const createFeature = async (req, res) => {
     const featureValidation = featureSchema.parse(req.body);
     const features = await prisma.feature.create({

@@ -1,6 +1,6 @@
 import request from "supertest";
-import app from "../../../app";
-import { prisma } from "../../../prisma/client";
+import app from "../../../app.js";
+import { prisma } from "../../../prisma/client.js";
 import bcrypt from "bcrypt";
 // --- Mocking Dependencies ---
 jest.mock("../../../prisma/client", () => ({

@@ -1,5 +1,5 @@
-import { responses } from "../../../utils/responses";
-import { prisma } from "../../../prisma/client";
+import { responses } from "../../../utils/responses.js";
+import { prisma } from "../../../prisma/client.js";
 const getUsers = async (req, res) => {
     const getUsers = await prisma.user.findMany({
         select: {

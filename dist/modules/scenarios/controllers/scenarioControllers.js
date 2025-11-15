@@ -1,6 +1,6 @@
-import { scenarioSchema } from "../dto/scenarioDto";
-import { responses } from "../../../utils/responses";
-import { prisma } from "../../../prisma/client";
+import { scenarioSchema } from "../dto/scenarioDto.js";
+import { responses } from "../../../utils/responses.js";
+import { prisma } from "../../../prisma/client.js";
 const createScenarios = async (req, res) => {
     const scenarioValidation = scenarioSchema.parse(req.body);
     const scenarios = await prisma.testScenario.create({
