@@ -1,21 +1,7 @@
-"use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const supertest_1 = __importDefault(require("supertest"));
-const app_1 = __importDefault(require("../../../app"));
-const client_1 = require("../../../prisma/client");
-const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+import request from "supertest";
+import app from "../../../app";
+import { prisma } from "../../../prisma/client";
+import jwt from "jsonwebtoken";
 jest.mock("../../../prisma/client", () => ({
     ProjectPriority: {
         High: "high",
@@ -40,8 +26,11 @@ jest.mock("../../../prisma/client", () => ({
         $transaction: jest.fn(),
     },
 }));
-jest.mock("jsonwebtoken", () => (Object.assign(Object.assign({}, jest.requireActual("jsonwebtoken")), { verify: jest.fn() })));
-const mockedJwt = jsonwebtoken_1.default;
+jest.mock("jsonwebtoken", () => ({
+    ...jest.requireActual("jsonwebtoken"),
+    verify: jest.fn(),
+}));
+const mockedJwt = jwt;
 let mockedTx;
 let mockRelations;
 let shouldFailFindUnique;
@@ -68,7 +57,7 @@ describe("testing feedback detail", () => {
                 return;
             }
         });
-        client_1.prisma.$transaction.mockImplementation((callback) => __awaiter(void 0, void 0, void 0, function* () {
+        prisma.$transaction.mockImplementation(async (callback) => {
             mockedTx = {
                 feedback: {
                     findUniqueOrThrow: jest.fn(),
@@ -94,8 +83,8 @@ describe("testing feedback detail", () => {
             mockedTx.testScenario.update.mockResolvedValue({});
             mockedTx.feature.update.mockResolvedValue({});
             mockedTx.project.update.mockResolvedValue({});
-            return yield callback(mockedTx);
-        }));
+            return await callback(mockedTx);
+        });
     });
     const authHeader = { Authorization: "Bearer dummy-token" };
     // =================================================================
@@ -112,23 +101,23 @@ describe("testing feedback detail", () => {
             testScenario: { code: "TC-01", test_case: "Login test" },
             feature: { title: "Authentication" },
         };
-        test("should return feedback details successfully with status 200", () => __awaiter(void 0, void 0, void 0, function* () {
-            client_1.prisma.feedback.findUnique.mockResolvedValue(mockFeedbackDetail);
-            const response = yield (0, supertest_1.default)(app_1.default)
+        test("should return feedback details successfully with status 200", async () => {
+            prisma.feedback.findUnique.mockResolvedValue(mockFeedbackDetail);
+            const response = await request(app)
                 .get("/api/feedback-history/details/1")
                 .set(authHeader);
             expect(response.status).toBe(200);
             expect(response.body.payload.data).toEqual(mockFeedbackDetail);
-            expect(client_1.prisma.feedback.findUnique).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 1 } }));
-        }));
-        test("should return 404 if feedback is not found", () => __awaiter(void 0, void 0, void 0, function* () {
-            client_1.prisma.feedback.findUnique.mockResolvedValue(null);
-            const response = yield (0, supertest_1.default)(app_1.default)
+            expect(prisma.feedback.findUnique).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 1 } }));
+        });
+        test("should return 404 if feedback is not found", async () => {
+            prisma.feedback.findUnique.mockResolvedValue(null);
+            const response = await request(app)
                 .get("/api/feedback-history/details/999")
                 .set(authHeader);
             expect(response.status).toBe(404);
             expect(response.body.payload.message).toBe("Feedback not found!");
-        }));
+        });
     });
     // =================================================================
     // ==  TESTS FOR UPDATE FEEDBACK HISTORY DETAILS                  ==
@@ -140,8 +129,8 @@ describe("testing feedback detail", () => {
             feature_title: "Updated Feature Title",
             project_priority: "high",
         };
-        test("should update all related data successfully with status 200", () => __awaiter(void 0, void 0, void 0, function* () {
-            const response = yield (0, supertest_1.default)(app_1.default)
+        test("should update all related data successfully with status 200", async () => {
+            const response = await request(app)
                 .patch("/api/feedback-history/details/1")
                 .set(authHeader)
                 .send(fullUpdatePayload);
@@ -163,30 +152,30 @@ describe("testing feedback detail", () => {
                 where: { id: 30 },
                 data: { priority: "high" },
             });
-        }));
-        test("should return 400 for an invalid ID", () => __awaiter(void 0, void 0, void 0, function* () {
-            const response = yield (0, supertest_1.default)(app_1.default)
+        });
+        test("should return 400 for an invalid ID", async () => {
+            const response = await request(app)
                 .patch("/api/feedback-history/details/abc")
                 .set(authHeader)
                 .send(fullUpdatePayload);
             expect(response.status).toBe(400);
             expect(response.body.payload.message).toBe("Invalid feedback history detail ID");
-        }));
-        test("should return 400 for invalid request body (Zod validation)", () => __awaiter(void 0, void 0, void 0, function* () {
-            const response = yield (0, supertest_1.default)(app_1.default)
+        });
+        test("should return 400 for invalid request body (Zod validation)", async () => {
+            const response = await request(app)
                 .patch("/api/feedback-history/details/1")
                 .set(authHeader)
                 .send({ feedback_content: 12345 });
             expect(response.status).toBe(400);
-        }));
-        test("should return 500 if finding relations fails", () => __awaiter(void 0, void 0, void 0, function* () {
+        });
+        test("should return 500 if finding relations fails", async () => {
             shouldFailFindUnique = true;
-            const response = yield (0, supertest_1.default)(app_1.default)
+            const response = await request(app)
                 .patch("/api/feedback-history/details/1")
                 .set(authHeader)
                 .send(fullUpdatePayload);
             expect(response.status).toBe(500);
             expect(response.body.message).toBe("Something went wrong!");
-        }));
+        });
     });
 });

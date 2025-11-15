@@ -1,26 +1,21 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = __importDefault(require("express"));
-const cors_1 = __importDefault(require("cors"));
-const dotenv_1 = __importDefault(require("dotenv"));
-const authRoutes_1 = __importDefault(require("./routes/auth/authRoutes"));
-const projectRoutes_1 = __importDefault(require("./routes/projects/projectRoutes"));
-const featureRoutes_1 = __importDefault(require("./routes/features/featureRoutes"));
-const scenarioRoutes_1 = __importDefault(require("./routes/scenarios/scenarioRoutes"));
-const feedbackRoutes_1 = __importDefault(require("./routes/feedbacks/feedbackRoutes"));
-const feedbackHistoryRoutes_1 = __importDefault(require("./routes/feedbacks/feedbackHistoryRoutes"));
-const feedbackHistoryDetailRoutes_1 = __importDefault(require("./routes/feedbacks/feedbackHistoryDetailRoutes"));
-const dashboardRoutes_1 = __importDefault(require("./routes/dashboards/dashboardRoutes"));
-const token_1 = require("./utils/token");
-const zod_1 = require("zod");
-dotenv_1.default.config();
-const app = (0, express_1.default)();
-app.use((0, cors_1.default)());
-app.use(express_1.default.json());
-app.use(express_1.default.urlencoded({ extended: true }));
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import authRoutes from "./routes/auth/authRoutes";
+import projectRoutes from "./routes/projects/projectRoutes";
+import featureRoutes from "./routes/features/featureRoutes";
+import scenarioRoutes from "./routes/scenarios/scenarioRoutes";
+import feedbackRoutes from "./routes/feedbacks/feedbackRoutes";
+import feedHistoryRoutes from "./routes/feedbacks/feedbackHistoryRoutes";
+import feedHistoryDetailRoutes from "./routes/feedbacks/feedbackHistoryDetailRoutes";
+import dashboardRoutes from "./routes/dashboards/dashboardRoutes";
+import { authenticateToken } from "./utils/token";
+import { ZodError } from "zod";
+dotenv.config();
+const app = express();
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.get("/health", (req, res) => {
     res.json({
         status: "ok",
@@ -45,16 +40,16 @@ app.get("/api/debug-env", (req, res) => {
 app.get("/", (req, res) => {
     res.json({ message: "API is running" });
 });
-app.use("/api", authRoutes_1.default);
-app.use("/api", token_1.authenticateToken, dashboardRoutes_1.default);
-app.use("/api", token_1.authenticateToken, feedbackHistoryDetailRoutes_1.default);
-app.use("/api", token_1.authenticateToken, projectRoutes_1.default);
-app.use("/api", token_1.authenticateToken, featureRoutes_1.default);
-app.use("/api", token_1.authenticateToken, scenarioRoutes_1.default);
-app.use("/api", token_1.authenticateToken, feedbackRoutes_1.default);
-app.use("/api", token_1.authenticateToken, feedbackHistoryRoutes_1.default);
+app.use("/api", authRoutes);
+app.use("/api", authenticateToken, dashboardRoutes);
+app.use("/api", authenticateToken, feedHistoryDetailRoutes);
+app.use("/api", authenticateToken, projectRoutes);
+app.use("/api", authenticateToken, featureRoutes);
+app.use("/api", authenticateToken, scenarioRoutes);
+app.use("/api", authenticateToken, feedbackRoutes);
+app.use("/api", authenticateToken, feedHistoryRoutes);
 app.use((err, req, res, next) => {
-    if (err instanceof zod_1.ZodError) {
+    if (err instanceof ZodError) {
         return res.status(400).json({
             status: "error",
             message: "Invalid request data",
@@ -70,4 +65,4 @@ app.use((err, req, res, next) => {
     res.status(500).json({ message: "Something went wrong!" });
     next();
 });
-exports.default = app;
+export default app;

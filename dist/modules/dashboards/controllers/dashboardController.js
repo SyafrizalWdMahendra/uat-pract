@@ -1,24 +1,12 @@
-"use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.getDashboardCurrentProjects = exports.getDashboardStatistics = void 0;
-const responses_1 = require("../../../utils/responses");
-const client_1 = require("../../../prisma/client");
-const getDashboardStatistics = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+import { responses } from "../../../utils/responses";
+import { prisma } from "../../../prisma/client";
+const getDashboardStatistics = async (req, res) => {
     const [activeProjects, totalFeatures, totalTestScenarios,
     // passedScenariosCount,
-    ] = yield Promise.all([
-        client_1.prisma.project.count({ where: { status: "active" } }),
-        client_1.prisma.feature.count(),
-        client_1.prisma.testScenario.count(),
+    ] = await Promise.all([
+        prisma.project.count({ where: { status: "active" } }),
+        prisma.feature.count(),
+        prisma.testScenario.count(),
         // prisma.testScenario.count({ where: { status: "passed" } }),
     ]);
     // const averageProgress =
@@ -31,12 +19,11 @@ const getDashboardStatistics = (req, res) => __awaiter(void 0, void 0, void 0, f
         totalTestScenarios,
         // averageProgress: Math.round(averageProgress),
     };
-    return (0, responses_1.responses)(res, 200, "Dashboard statistics successfully retrieved", statistics);
-});
-exports.getDashboardStatistics = getDashboardStatistics;
-const getDashboardCurrentProjects = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    return responses(res, 200, "Dashboard statistics successfully retrieved", statistics);
+};
+const getDashboardCurrentProjects = async (req, res) => {
     try {
-        const projects = yield client_1.prisma.project.findMany({
+        const projects = await prisma.project.findMany({
             where: {
                 status: "active",
             },
@@ -57,10 +44,10 @@ const getDashboardCurrentProjects = (req, res) => __awaiter(void 0, void 0, void
             },
         });
         if (!projects || projects.length === 0) {
-            return (0, responses_1.responses)(res, 200, "No projects found matching criteria", []);
+            return responses(res, 200, "No projects found matching criteria", []);
         }
-        const projectsWithScenarioCounts = yield Promise.all(projects.map((project) => __awaiter(void 0, void 0, void 0, function* () {
-            const scenarioCount = yield client_1.prisma.testScenario.count({
+        const projectsWithScenarioCounts = await Promise.all(projects.map(async (project) => {
+            const scenarioCount = await prisma.testScenario.count({
                 where: {
                     feature: {
                         project_id: project.id,
@@ -83,12 +70,12 @@ const getDashboardCurrentProjects = (req, res) => __awaiter(void 0, void 0, void
                 duration: project.duration ? `${project.duration} days` : null,
                 due_date: formattedDueDate,
             };
-        })));
-        return (0, responses_1.responses)(res, 200, "Projects successfully retrieved", projectsWithScenarioCounts);
+        }));
+        return responses(res, 200, "Projects successfully retrieved", projectsWithScenarioCounts);
     }
     catch (error) {
         console.error("Error fetching projects:", error);
-        return (0, responses_1.responses)(res, 500, "Internal server error", null);
+        return responses(res, 500, "Internal server error", null);
     }
-});
-exports.getDashboardCurrentProjects = getDashboardCurrentProjects;
+};
+export { getDashboardStatistics, getDashboardCurrentProjects };
