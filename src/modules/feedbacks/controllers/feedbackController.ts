@@ -1,7 +1,7 @@
-import { feedbackSchema } from "../dto/feedbackDto.js";
+import { feedbackSchema } from "../dto/feedbackDto";
 import { Request, Response } from "express";
-import { responses } from "../../../utils/responses.js";
-import { prisma } from "../../../prisma/client.js";
+import { responses } from "../../../utils/responses";
+import { prisma } from "../../../prisma/client";
 
 const createFeedback = async (req: Request, res: Response) => {
   const feedbackValidation = feedbackSchema.parse(req.body);

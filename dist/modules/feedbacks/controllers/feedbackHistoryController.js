@@ -1,6 +1,18 @@
-import { responses } from "../../../utils/responses.js";
-import { prisma } from "../../../prisma/client.js";
-const searchFeedbackHistory = async (req, res) => {
+"use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.deleteFeedbackHistory = exports.getFeedbackHistory = exports.getFeedbackHistoryById = exports.searchFeedbackHistory = void 0;
+const responses_1 = require("../../../utils/responses");
+const client_1 = require("../../../prisma/client");
+const searchFeedbackHistory = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { content, feature, author, status, priority } = req.query;
     const selectClause = {
         id: true,
@@ -57,18 +69,19 @@ const searchFeedbackHistory = async (req, res) => {
     if (whereClause.AND.length === 0) {
         whereClause = {};
     }
-    const searchResult = await prisma.feedback.findMany({
+    const searchResult = yield client_1.prisma.feedback.findMany({
         where: whereClause,
         select: selectClause,
         orderBy: {
             created_at: "desc",
         },
     });
-    return responses(res, 200, "Feedback history successfully retrieved", searchResult);
-};
-const getFeedbackHistoryById = async (req, res) => {
+    return (0, responses_1.responses)(res, 200, "Feedback history successfully retrieved", searchResult);
+});
+exports.searchFeedbackHistory = searchFeedbackHistory;
+const getFeedbackHistoryById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const feedbackId = Number(req.params.id);
-    const userFeedbacks = await prisma.feedback.findFirst({
+    const userFeedbacks = yield client_1.prisma.feedback.findFirst({
         where: {
             id: feedbackId,
         },
@@ -99,16 +112,17 @@ const getFeedbackHistoryById = async (req, res) => {
         },
     });
     if (!userFeedbacks) {
-        return responses(res, 404, "Riwayat feedback tidak ditemukan atau Anda tidak memiliki akses.", null);
+        return (0, responses_1.responses)(res, 404, "Riwayat feedback tidak ditemukan atau Anda tidak memiliki akses.", null);
     }
-    return responses(res, 200, "Data riwayat feedback berhasil diambil", userFeedbacks);
-};
-const getFeedbackHistory = async (req, res) => {
+    return (0, responses_1.responses)(res, 200, "Data riwayat feedback berhasil diambil", userFeedbacks);
+});
+exports.getFeedbackHistoryById = getFeedbackHistoryById;
+const getFeedbackHistory = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { projectId } = req.query;
     if (!projectId) {
         return res.status(400).json({ message: "projectId diperlukan" });
     }
-    const feedbacks = await prisma.feedback.findMany({
+    const feedbacks = yield client_1.prisma.feedback.findMany({
         where: {
             project_id: Number(projectId),
         },
@@ -127,21 +141,22 @@ const getFeedbackHistory = async (req, res) => {
             data: feedbacks,
         },
     });
-};
-const deleteFeedbackHistory = async (req, res) => {
+});
+exports.getFeedbackHistory = getFeedbackHistory;
+const deleteFeedbackHistory = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const feedHistoryId = Number(req.params.id);
     if (isNaN(feedHistoryId)) {
-        return responses(res, 400, "Invalid feedback history ID", null);
+        return (0, responses_1.responses)(res, 400, "Invalid feedback history ID", null);
     }
-    const existingFeedHistory = await prisma.feedback.findUnique({
+    const existingFeedHistory = yield client_1.prisma.feedback.findUnique({
         where: { id: feedHistoryId },
     });
     if (!existingFeedHistory) {
-        return responses(res, 404, "Feedback history not found!", null);
+        return (0, responses_1.responses)(res, 404, "Feedback history not found!", null);
     }
-    await prisma.feedback.delete({
+    yield client_1.prisma.feedback.delete({
         where: { id: feedHistoryId },
     });
-    return responses(res, 200, "Feedback History and related Feedback successfully deleted", null);
-};
-export { searchFeedbackHistory, getFeedbackHistoryById, getFeedbackHistory, deleteFeedbackHistory, };
+    return (0, responses_1.responses)(res, 200, "Feedback History and related Feedback successfully deleted", null);
+});
+exports.deleteFeedbackHistory = deleteFeedbackHistory;

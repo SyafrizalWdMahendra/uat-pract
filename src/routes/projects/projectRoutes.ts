@@ -5,7 +5,7 @@ import {
   getProject,
   updateProject,
   getProjectInformation,
-} from "../../modules/projects/controllers/projectControllers.js";
+} from "../../modules/projects/controllers/projectControllers";
 
 const router = Router();
 

@@ -5,7 +5,7 @@ import {
   getScenarioDocs,
   getScenarios,
   updateScenarios,
-} from "../../modules/scenarios/controllers/scenarioControllers.js";
+} from "../../modules/scenarios/controllers/scenarioControllers";
 
 const router = Router();
 

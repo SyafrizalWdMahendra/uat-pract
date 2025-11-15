@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import { scenarioSchema } from "../dto/scenarioDto.js";
-import { responses } from "../../../utils/responses.js";
-import { prisma } from "../../../prisma/client.js";
+import { scenarioSchema } from "../dto/scenarioDto";
+import { responses } from "../../../utils/responses";
+import { prisma } from "../../../prisma/client";
 
 const createScenarios = async (req: Request, res: Response) => {
   const scenarioValidation = scenarioSchema.parse(req.body);

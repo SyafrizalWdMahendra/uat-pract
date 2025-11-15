@@ -5,7 +5,7 @@ import {
   updateFeatures,
   deleteFeatures,
   // searchFeature,
-} from "../../modules/features/controllers/featureControllers.js";
+} from "../../modules/features/controllers/featureControllers";
 
 const router = Router();
 

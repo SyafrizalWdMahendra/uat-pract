@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { responses } from "../../../utils/responses.js";
-import { prisma } from "../../../prisma/client.js";
+import { responses } from "../../../utils/responses";
+import { prisma } from "../../../prisma/client";
 
 const getDashboardStatistics = async (req: Request, res: Response) => {
   const [

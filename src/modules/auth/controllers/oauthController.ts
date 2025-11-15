@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { OAuth2Client } from "google-auth-library";
 import { SignJWT } from "jose";
-import { prisma } from "../../../prisma/client.js";
+import { prisma } from "../../../prisma/client";
 
 const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -17,19 +17,17 @@ const getSecretKey = () => {
   return new TextEncoder().encode(secret);
 };
 
-/**
- * Controller untuk memulai proses Google Login.
- * Ini mengarahkan pengguna ke halaman persetujuan Google.
- */
 export const redirectToGoogle = (req: Request, res: Response) => {
   try {
     const authUrl = client.generateAuthUrl({
       access_type: "offline",
+      prompt: "consent",
       scope: [
         "https://www.googleapis.com/auth/userinfo.profile",
         "https://www.googleapis.com/auth/userinfo.email",
       ],
     });
+
     res.redirect(authUrl);
   } catch (error) {
     console.error("Error creating Google auth URL:", error);
@@ -37,9 +35,6 @@ export const redirectToGoogle = (req: Request, res: Response) => {
   }
 };
 
-/**
- * Controller untuk menangani callback dari Google OAuth.
- */
 export const oauthController = async (req: Request, res: Response) => {
   const { code } = req.query;
 
@@ -49,10 +44,14 @@ export const oauthController = async (req: Request, res: Response) => {
 
   try {
     const { tokens } = await client.getToken(code as string);
+    if (!tokens.id_token) {
+      throw new Error("Google tidak mengembalikan id_token.");
+    }
+
     client.setCredentials(tokens);
 
     const ticket = await client.verifyIdToken({
-      idToken: tokens.id_token!,
+      idToken: tokens.id_token,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
 
@@ -73,9 +72,9 @@ export const oauthController = async (req: Request, res: Response) => {
     if (!user) {
       user = await prisma.user.create({
         data: {
-          email: email,
-          name: name,
-          avatar: picture,
+          email,
+          name,
+          avatar: picture ?? null,
           role: "users",
           password: null,
         },
@@ -89,12 +88,12 @@ export const oauthController = async (req: Request, res: Response) => {
       role: user.role,
     };
 
-    const secretKey = getSecretKey();
+    const secret = getSecretKey();
     const jwtToken = await new SignJWT(tokenPayload)
-      .setProtectedHeader({ alg: "HS265" })
+      .setProtectedHeader({ alg: "HS256" })
       .setIssuedAt()
-      .setExpirationTime("1d")
-      .sign(secretKey);
+      .setExpirationTime("1h")
+      .sign(secret);
 
     res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${jwtToken}`);
   } catch (error) {

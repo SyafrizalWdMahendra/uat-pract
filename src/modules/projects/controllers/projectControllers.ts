@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import { projectSchema } from "../dto/projectDto.js";
-import { responses } from "../../../utils/responses.js";
-import { prisma } from "../../../prisma/client.js";
-import { scenarioDocsSchema } from "../../scenarios/dto/scenarioDocsDto..js";
+import { projectSchema } from "../dto/projectDto";
+import { responses } from "../../../utils/responses";
+import { prisma } from "../../../prisma/client";
+import { scenarioDocsSchema } from "../../scenarios/dto/scenarioDocsDto.";
 
 const formatDate = (date: Date | null): string | null => {
   if (!date) return null;

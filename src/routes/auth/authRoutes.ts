@@ -3,15 +3,15 @@ import {
   register,
   login,
   googleLogin
-} from "../../modules/auth/controllers/authControllers.js";
+} from "../../modules/auth/controllers/authControllers";
 import {
   deleteUser,
   getUsers,
-} from "../../modules/auth/controllers/userControllers.js";
+} from "../../modules/auth/controllers/userControllers";
 import {
   oauthController,
   redirectToGoogle,
-} from "../../modules/auth/controllers/oauthController.js";
+} from "../../modules/auth/controllers/oauthController";
 // import { catchAsync } from "../../utils/catchAsync";
 
 const router = Router();

@@ -1,11 +1,11 @@
-import { Router } from "express";
-import { createFeature, getFeatures, updateFeatures, deleteFeatures,
-// searchFeature,
- } from "../../modules/features/controllers/featureControllers.js";
-const router = Router();
-router.post("/features", createFeature);
-router.get("/features", getFeatures);
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const featureControllers_1 = require("../../modules/features/controllers/featureControllers");
+const router = (0, express_1.Router)();
+router.post("/features", featureControllers_1.createFeature);
+router.get("/features", featureControllers_1.getFeatures);
 // router.get("/searchFeature", searchFeature);
-router.patch("/features/:id", updateFeatures);
-router.delete("/features/:id", deleteFeatures);
-export default router;
+router.patch("/features/:id", featureControllers_1.updateFeatures);
+router.delete("/features/:id", featureControllers_1.deleteFeatures);
+exports.default = router;

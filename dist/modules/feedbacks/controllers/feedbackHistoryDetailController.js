@@ -1,12 +1,24 @@
-import { updateDetailsSchema } from "../dto/feedbackDetailUpdateDto.js";
-import { responses } from "../../../utils/responses.js";
-import { prisma } from "../../../prisma/client.js";
-const getFeedHistoryDetails = async (req, res) => {
+"use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.updateFeedHistoryDetails = exports.getFeedHistoryDetails = void 0;
+const feedbackDetailUpdateDto_1 = require("../dto/feedbackDetailUpdateDto");
+const responses_1 = require("../../../utils/responses");
+const client_1 = require("../../../prisma/client");
+const getFeedHistoryDetails = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const feedHistoryId = Number(req.params.id);
     if (isNaN(feedHistoryId)) {
-        return responses(res, 400, "Invalid feedback ID", null);
+        return (0, responses_1.responses)(res, 400, "Invalid feedback ID", null);
     }
-    const feedHistories = await prisma.feedback.findUnique({
+    const feedHistories = yield client_1.prisma.feedback.findUnique({
         where: { id: feedHistoryId },
         select: {
             id: true,
@@ -41,28 +53,29 @@ const getFeedHistoryDetails = async (req, res) => {
         },
     });
     if (!feedHistories) {
-        return responses(res, 404, "Feedback not found!", null);
+        return (0, responses_1.responses)(res, 404, "Feedback not found!", null);
     }
-    return responses(res, 200, "Feedback detail successfully retrieved", feedHistories);
-};
-const updateFeedHistoryDetails = async (req, res) => {
+    return (0, responses_1.responses)(res, 200, "Feedback detail successfully retrieved", feedHistories);
+});
+exports.getFeedHistoryDetails = getFeedHistoryDetails;
+const updateFeedHistoryDetails = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const feedHistoryId = Number(req.params.id);
     if (isNaN(feedHistoryId)) {
-        return responses(res, 400, "Invalid feedback ID", null);
+        return (0, responses_1.responses)(res, 400, "Invalid feedback ID", null);
     }
-    const validation = updateDetailsSchema.safeParse(req.body);
+    const validation = feedbackDetailUpdateDto_1.updateDetailsSchema.safeParse(req.body);
     if (!validation.success) {
-        return responses(res, 400, "Validation error", {
+        return (0, responses_1.responses)(res, 400, "Validation error", {
             errors: validation.error.flatten().fieldErrors,
         });
     }
     const { feature_title, test_scenario_code, test_scenario_test_case, feedback_priority, feedback_status, feedback_description, } = validation.data;
-    const existingFeedback = await prisma.feedback.findUnique({
+    const existingFeedback = yield client_1.prisma.feedback.findUnique({
         where: { id: feedHistoryId },
         select: { id: true, project_id: true, feature_id: true },
     });
     if (!existingFeedback) {
-        return responses(res, 404, "Feedback not found!", null);
+        return (0, responses_1.responses)(res, 404, "Feedback not found!", null);
     }
     const updateData = {};
     if (feedback_priority !== undefined && feedback_priority !== null) {
@@ -75,7 +88,7 @@ const updateFeedHistoryDetails = async (req, res) => {
         updateData.description = feedback_description;
     }
     if (feature_title) {
-        const feature = await prisma.feature.findFirst({
+        const feature = yield client_1.prisma.feature.findFirst({
             where: {
                 title: feature_title,
                 project_id: existingFeedback.project_id,
@@ -83,7 +96,7 @@ const updateFeedHistoryDetails = async (req, res) => {
             select: { id: true },
         });
         if (!feature) {
-            return responses(res, 404, `Feature with title "${feature_title}" not found`, null);
+            return (0, responses_1.responses)(res, 404, `Feature with title "${feature_title}" not found`, null);
         }
         updateData.feature_id = feature.id;
     }
@@ -98,19 +111,19 @@ const updateFeedHistoryDetails = async (req, res) => {
         if (test_scenario_test_case) {
             whereClause.test_case = test_scenario_test_case;
         }
-        const testScenario = await prisma.testScenario.findFirst({
+        const testScenario = yield client_1.prisma.testScenario.findFirst({
             where: whereClause,
             select: { id: true },
         });
         if (!testScenario) {
-            return responses(res, 404, "Test scenario not found with given criteria", null);
+            return (0, responses_1.responses)(res, 404, "Test scenario not found with given criteria", null);
         }
         updateData.test_scenario_id = testScenario.id;
     }
     if (Object.keys(updateData).length === 0) {
-        return responses(res, 400, "No valid fields to update", null);
+        return (0, responses_1.responses)(res, 400, "No valid fields to update", null);
     }
-    const updatedFeedback = await prisma.feedback.update({
+    const updatedFeedback = yield client_1.prisma.feedback.update({
         where: { id: feedHistoryId },
         data: updateData,
         select: {
@@ -145,6 +158,6 @@ const updateFeedHistoryDetails = async (req, res) => {
             },
         },
     });
-    return responses(res, 200, "Feedback successfully updated", updatedFeedback);
-};
-export { getFeedHistoryDetails, updateFeedHistoryDetails };
+    return (0, responses_1.responses)(res, 200, "Feedback successfully updated", updatedFeedback);
+});
+exports.updateFeedHistoryDetails = updateFeedHistoryDetails;

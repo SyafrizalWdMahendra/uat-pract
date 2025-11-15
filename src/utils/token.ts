@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { jwtVerify } from "jose";
-import { CustomJwtPayload } from "../types/express/index.js";
+import { CustomJwtPayload } from "../types/express/index";
 
 const authenticateToken = async (
   req: Request,

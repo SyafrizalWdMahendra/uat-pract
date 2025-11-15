@@ -1,9 +1,21 @@
-import { feedbackSchema } from "../dto/feedbackDto.js";
-import { responses } from "../../../utils/responses.js";
-import { prisma } from "../../../prisma/client.js";
-const createFeedback = async (req, res) => {
-    const feedbackValidation = feedbackSchema.parse(req.body);
-    const createdFeedback = await prisma.feedback.create({
+"use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.deleteFeedbacks = exports.updateFeedbacks = exports.getFeedbacks = exports.createFeedback = void 0;
+const feedbackDto_1 = require("../dto/feedbackDto");
+const responses_1 = require("../../../utils/responses");
+const client_1 = require("../../../prisma/client");
+const createFeedback = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const feedbackValidation = feedbackDto_1.feedbackSchema.parse(req.body);
+    const createdFeedback = yield client_1.prisma.feedback.create({
         data: {
             user_id: feedbackValidation.user_id,
             test_scenario_id: feedbackValidation.test_scenario_id,
@@ -14,45 +26,48 @@ const createFeedback = async (req, res) => {
             status: feedbackValidation.status,
         },
     });
-    return responses(res, 201, "Feedback successfully created", {
+    return (0, responses_1.responses)(res, 201, "Feedback successfully created", {
         createdFeedback,
     });
-};
-const getFeedbacks = async (req, res) => {
-    const feedbacks = await prisma.feedback.findMany();
+});
+exports.createFeedback = createFeedback;
+const getFeedbacks = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const feedbacks = yield client_1.prisma.feedback.findMany();
     if (!feedbacks) {
-        return responses(res, 404, "Feedback not found", null);
+        return (0, responses_1.responses)(res, 404, "Feedback not found", null);
     }
-    return responses(res, 200, "Feedback successfully retrivied", feedbacks);
-};
-const updateFeedbacks = async (req, res) => {
+    return (0, responses_1.responses)(res, 200, "Feedback successfully retrivied", feedbacks);
+});
+exports.getFeedbacks = getFeedbacks;
+const updateFeedbacks = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const feedbackId = Number(req.params.id);
-    const feedbackValidation = feedbackSchema.safeParse(req.body);
+    const feedbackValidation = feedbackDto_1.feedbackSchema.safeParse(req.body);
     if (!feedbackValidation.success) {
-        return responses(res, 400, "Validation error", feedbackValidation.error.format());
+        return (0, responses_1.responses)(res, 400, "Validation error", feedbackValidation.error.format());
     }
-    const feedbacks = await prisma.feedback.update({
+    const feedbacks = yield client_1.prisma.feedback.update({
         where: {
             id: feedbackId,
         },
         data: feedbackValidation.data,
     });
-    return responses(res, 200, "Feedback successfully updated", feedbacks);
-};
-const deleteFeedbacks = async (req, res) => {
+    return (0, responses_1.responses)(res, 200, "Feedback successfully updated", feedbacks);
+});
+exports.updateFeedbacks = updateFeedbacks;
+const deleteFeedbacks = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const feedbackId = Number(req.params.id);
     if (isNaN(feedbackId)) {
-        return responses(res, 400, "Invalid feedback ID", null);
+        return (0, responses_1.responses)(res, 400, "Invalid feedback ID", null);
     }
-    const existingFeedbacks = await prisma.feedback.findUnique({
+    const existingFeedbacks = yield client_1.prisma.feedback.findUnique({
         where: { id: feedbackId },
     });
     if (!existingFeedbacks) {
-        return responses(res, 404, "Feedback not found!", null);
+        return (0, responses_1.responses)(res, 404, "Feedback not found!", null);
     }
-    await prisma.feedback.delete({
+    yield client_1.prisma.feedback.delete({
         where: { id: feedbackId },
     });
-    return responses(res, 200, "Feedback successfully deleted", null);
-};
-export { createFeedback, getFeedbacks, updateFeedbacks, deleteFeedbacks };
+    return (0, responses_1.responses)(res, 200, "Feedback successfully deleted", null);
+});
+exports.deleteFeedbacks = deleteFeedbacks;
