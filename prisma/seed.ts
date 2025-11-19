@@ -5,7 +5,7 @@ import {
   featuresProject2,
   testScenariosFeature1,
   testScenariosFeature2,
-} from "./seed/utils";
+} from "./seed/utils.js";
 import { hash } from "bcrypt";
 
 const prisma = new PrismaClient();
