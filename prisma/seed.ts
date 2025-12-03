@@ -1,4 +1,4 @@
-import { ProjectPriority, ProjectStatus } from "../src/generated/client.js";
+import { ProjectPriority, ProjectStatus } from "@prisma/client";
 import { PrismaClient } from "@prisma/client";
 
 import {

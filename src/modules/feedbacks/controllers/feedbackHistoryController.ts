@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { responses } from "../../../utils/responses.js";
 import { prisma } from "../../../prisma/client.js";
-import type { FeedbackPriority, FeedbackStatus, Prisma } from "../../../generated/client.js";
+import { FeedbackPriority, FeedbackStatus, Prisma } from "@prisma/client";
 
 const searchFeedbackHistory = async (req: Request, res: Response) => {
   const { content, feature, author, status, priority } = req.query;
