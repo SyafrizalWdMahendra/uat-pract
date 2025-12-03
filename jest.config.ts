@@ -1,12 +1,11 @@
-// jest.config.ts
 export default {
   preset: "ts-jest",
   testEnvironment: "node",
   roots: ["<rootDir>/src"],
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
-    "^(\\.{1,2}/.*)\\.(js|ts)$": "$1", // Map both .js and .ts to source .ts files
-    "^jose$": "<rootDir>/__mocks__/jose.ts", // Mock jose package
+    "^(\\.{1,2}/.*)\\.(js|ts)$": "$1",
+    "^jose$": "<rootDir>/__mocks__/jose.ts",
   },
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
   testMatch: ["**/__tests__/**/*.test.ts"],
