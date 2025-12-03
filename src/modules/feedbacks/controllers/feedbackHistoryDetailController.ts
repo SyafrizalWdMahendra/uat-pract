@@ -75,7 +75,6 @@ const updateFeedHistoryDetails = async (req: Request, res: Response) => {
     return responses(res, 404, "Feedback not found!", null);
   }
 
-  // Typed update object
   const updateData: Prisma.FeedbackUpdateInput = {};
 
   if (feedback_priority !== undefined) {
@@ -89,6 +88,8 @@ const updateFeedHistoryDetails = async (req: Request, res: Response) => {
   if (feedback_description !== undefined) {
     updateData.description = feedback_description;
   }
+
+  let newFeatureId: number | undefined;
 
   if (feature_title) {
     const feature = await prisma.feature.findFirst({
@@ -108,7 +109,8 @@ const updateFeedHistoryDetails = async (req: Request, res: Response) => {
       );
     }
 
-    updateData.feature = { connect: { id: feature.id } };
+    newFeatureId = feature.id;
+    updateData.feature = { connect: { id: newFeatureId } };
   }
 
   const hasScenarioUpdate =
@@ -116,8 +118,7 @@ const updateFeedHistoryDetails = async (req: Request, res: Response) => {
     (test_scenario_test_case && test_scenario_test_case.trim() !== "");
 
   if (hasScenarioUpdate) {
-    const targetFeatureId =
-      Number(updateData.feature) || existingFeedback.feature_id;
+    const targetFeatureId = newFeatureId ?? existingFeedback.feature_id;
 
     const whereClause: Prisma.TestScenarioWhereInput = {
       feature_id: targetFeatureId,
