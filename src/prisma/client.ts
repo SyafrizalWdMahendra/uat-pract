@@ -1,5 +1,2 @@
-import { PrismaClient } from "@prisma/client";
-
-export const prisma = new PrismaClient({
-  datasourceUrl: process.env.DATABASE_URL,
-});
+import { prisma } from "../prisma/prisma.config.js";
+export { prisma };
