@@ -4,7 +4,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "build": "prisma generate && tsc",
+    "build": "tsc && npx prisma generate",
     "dev": "nodemon --exec node --loader ts-node/esm src/index.ts",
     "start": "node dist/index.js",
     "lint": "eslint .",
