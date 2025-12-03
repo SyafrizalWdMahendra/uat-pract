@@ -1,5 +1,11 @@
 import { Router } from "express";
-import { createScenarios, deleteScenarios, getScenarioDocs, getScenarios, updateScenarios, } from "../../modules/scenarios/controllers/scenarioControllers.js";
+import {
+  createScenarios,
+  deleteScenarios,
+  getScenarioDocs,
+  getScenarios,
+  updateScenarios,
+} from "../../modules/scenarios/controllers/scenarioControllers.js";
 const router = Router();
 router.post("/scenarios", createScenarios);
 router.get("/scenarios", getScenarios);

@@ -16,9 +16,18 @@ const getSecretKey = () => {
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const registValidation = registerSchema.parse(req.body);
-    const { name, email, password, role } = registValidation;
+    const registValidation = registerSchema.safeParse(req.body);
 
+    if (!registValidation.success) {
+      return responses(
+        res,
+        400,
+        "regist validation error",
+        registValidation.error.format()
+      );
+    }
+
+    const { name, email, password, role } = registValidation.data;
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
@@ -52,8 +61,18 @@ export const register = async (req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
   try {
-    const loginValidation = loginSchema.parse(req.body);
-    const { email, password } = loginValidation;
+    const loginValidation = loginSchema.safeParse(req.body);
+
+    if (!loginValidation.success) {
+      return responses(
+        res,
+        400,
+        "login validation error",
+        loginValidation.error.format()
+      );
+    }
+
+    const { email, password } = loginValidation.data;
 
     const user = await prisma.user.findUnique({
       where: { email },

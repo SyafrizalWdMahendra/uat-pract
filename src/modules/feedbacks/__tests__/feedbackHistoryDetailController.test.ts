@@ -17,14 +17,15 @@ jest.mock("../../../prisma/client", () => ({
     },
     testScenario: {
       update: jest.fn(),
+      findFirst: jest.fn(),
     },
     feature: {
       update: jest.fn(),
+      findFirst: jest.fn(),
     },
     project: {
       update: jest.fn(),
     },
-    $transaction: jest.fn(),
   },
 }));
 
@@ -34,26 +35,14 @@ jest.mock("jsonwebtoken", () => ({
 }));
 
 const mockedJwt = jwt as jest.Mocked<typeof jwt>;
-let mockedTx: any;
-let mockRelations: any;
-let shouldFailFindUnique: boolean;
 
 describe("testing feedback detail", () => {
+  const authHeader = { Authorization: "Bearer dummy-token" };
+
   beforeEach(() => {
     jest.clearAllMocks();
 
-    shouldFailFindUnique = false;
-    mockRelations = {
-      testScenario: {
-        id: 10,
-        feature: {
-          id: 20,
-          project_id: 30,
-        },
-      },
-    };
-
-    (mockedJwt.verify as unknown as jest.Mock).mockImplementation(
+    mockedJwt.verify.mockImplementation(
       (
         token: string,
         secretOrPublicKey: unknown,
@@ -64,56 +53,18 @@ describe("testing feedback detail", () => {
 
         const cb =
           typeof optionsOrCallback === "function"
-            ? (optionsOrCallback as jwt.VerifyCallback)
+            ? optionsOrCallback
             : callback;
 
         if (cb) {
-          cb(null, userPayload as any);
-          return;
+          cb(null, userPayload as unknown as jwt.JwtPayload);
         }
       }
     );
-
-    (prisma.$transaction as jest.Mock).mockImplementation(async (callback) => {
-      mockedTx = {
-        feedback: {
-          findUniqueOrThrow: jest.fn(),
-          update: jest.fn(),
-        },
-        testScenario: {
-          update: jest.fn(),
-        },
-        feature: {
-          update: jest.fn(),
-        },
-        project: {
-          update: jest.fn(),
-        },
-      };
-
-      if (shouldFailFindUnique) {
-        (mockedTx.feedback.findUniqueOrThrow as jest.Mock).mockRejectedValue(
-          new Error("Feedback not found")
-        );
-      } else {
-        (mockedTx.feedback.findUniqueOrThrow as jest.Mock).mockResolvedValue(
-          mockRelations
-        );
-      }
-
-      (mockedTx.feedback.update as jest.Mock).mockResolvedValue({});
-      (mockedTx.testScenario.update as jest.Mock).mockResolvedValue({});
-      (mockedTx.feature.update as jest.Mock).mockResolvedValue({});
-      (mockedTx.project.update as jest.Mock).mockResolvedValue({});
-
-      return await callback(mockedTx);
-    });
   });
 
-  const authHeader = { Authorization: "Bearer dummy-token" };
-
   // =================================================================
-  // ==  TESTS FOR FIND FEEDBACK HISTORY DETAIL ==
+  // GET feedback detail
   // =================================================================
   describe("GET /api/feedback-history/details/:id", () => {
     const mockFeedbackDetail = {
@@ -156,76 +107,162 @@ describe("testing feedback detail", () => {
   });
 
   // =================================================================
-  // ==  TESTS FOR UPDATE FEEDBACK HISTORY DETAILS                  ==
+  // PATCH update feedback detail
   // =================================================================
   describe("PATCH /api/feedback-history/details/:id", () => {
-    const fullUpdatePayload = {
-      feedback_content: "Updated description",
-      test_scenario_code: "TC-02",
-      feature_title: "Updated Feature Title",
-      project_priority: "high",
+    const validPayload = {
+      feature_title: "New Feature",
+      test_scenario_code: "TC-20",
+      test_scenario_test_case: "Login success",
+      feedback_priority: "high",
+      feedback_status: "open",
+      feedback_description: "Updated feedback",
     };
 
-    test("should update all related data successfully with status 200", async () => {
-      const response = await request(app)
-        .patch("/api/feedback-history/details/1")
-        .set(authHeader)
-        .send(fullUpdatePayload);
-
-      expect(response.status).toBe(200);
-      expect(response.body.payload.message).toBe(
-        "Data terkait berhasil diperbarui"
-      );
-
-      expect(mockedTx.feedback.update).toHaveBeenCalledWith({
-        where: { id: 1 },
-        data: { description: "Updated description" },
-      });
-      expect(mockedTx.testScenario.update).toHaveBeenCalledWith({
-        where: { id: 10 },
-        data: { code: "TC-02" },
-      });
-      expect(mockedTx.feature.update).toHaveBeenCalledWith({
-        where: { id: 20 },
-        data: { title: "Updated Feature Title" },
-      });
-      expect(mockedTx.project.update).toHaveBeenCalledWith({
-        where: { id: 30 },
-        data: { priority: "high" },
-      });
-    });
-
-    test("should return 400 for an invalid ID", async () => {
+    test("should return 400 for invalid ID", async () => {
       const response = await request(app)
         .patch("/api/feedback-history/details/abc")
         .set(authHeader)
-        .send(fullUpdatePayload);
+        .send(validPayload);
 
       expect(response.status).toBe(400);
-      expect(response.body.payload.message).toBe(
-        "Invalid feedback history detail ID"
-      );
+      expect(response.body.payload.message).toBe("Invalid feedback ID");
     });
 
     test("should return 400 for invalid request body (Zod validation)", async () => {
       const response = await request(app)
         .patch("/api/feedback-history/details/1")
         .set(authHeader)
-        .send({ feedback_content: 12345 });
+        .send({ feedback_description: 123 });
 
       expect(response.status).toBe(400);
+      expect(response.body.payload.message).toBe("Validation error");
     });
 
-    test("should return 500 if finding relations fails", async () => {
-      shouldFailFindUnique = true;
+    test("should return 404 when feedback not found", async () => {
+      (prisma.feedback.findUnique as jest.Mock).mockResolvedValue(null);
 
       const response = await request(app)
         .patch("/api/feedback-history/details/1")
         .set(authHeader)
-        .send(fullUpdatePayload);
+        .send(validPayload);
 
-      expect(response.status).toBe(500);
-      expect(response.body.message).toBe("Something went wrong!");
+      expect(response.status).toBe(404);
+      expect(response.body.payload.message).toBe("Feedback not found!");
+    });
+
+    test("should return 404 if feature title does not exist", async () => {
+      (prisma.feedback.findUnique as jest.Mock).mockResolvedValue({
+        id: 1,
+        project_id: 99,
+        feature_id: 10,
+      });
+
+      (prisma.feature.findFirst as jest.Mock).mockResolvedValue(null);
+
+      const response = await request(app)
+        .patch("/api/feedback-history/details/1")
+        .set(authHeader)
+        .send({
+          feature_title: "New Feature",
+        });
+
+      expect(response.status).toBe(404);
+      expect(response.body.payload.message).toBe(
+        'Feature with title "New Feature" not found'
+      );
+    });
+
+    test("should return 404 if test scenario not found", async () => {
+      (prisma.feedback.findUnique as jest.Mock).mockResolvedValue({
+        id: 1,
+        project_id: 99,
+        feature_id: 10,
+      });
+
+      (prisma.feature.findFirst as jest.Mock).mockResolvedValue({ id: 20 });
+
+      (prisma.testScenario.findFirst as jest.Mock).mockResolvedValue(null);
+
+      const response = await request(app)
+        .patch("/api/feedback-history/details/1")
+        .set(authHeader)
+        .send({
+          feature_title: "Existing Feature",
+          test_scenario_code: "TC-99",
+          test_scenario_test_case: "Some case",
+        });
+
+      expect(response.status).toBe(404);
+      expect(response.body.payload.message).toBe(
+        "Test scenario not found with given criteria"
+      );
+    });
+
+    test("should return 400 if no valid field to update", async () => {
+      (prisma.feedback.findUnique as jest.Mock).mockResolvedValue({
+        id: 1,
+        project_id: 1,
+        feature_id: 10,
+      });
+
+      const response = await request(app)
+        .patch("/api/feedback-history/details/1")
+        .set(authHeader)
+        .send({});
+
+      expect(response.status).toBe(400);
+      expect(response.body.payload.message).toBe("No valid fields to update");
+    });
+
+    test("should update feedback successfully", async () => {
+      (prisma.feedback.findUnique as jest.Mock).mockResolvedValue({
+        id: 1,
+        project_id: 99,
+        feature_id: 10,
+      });
+
+      (prisma.feature.findFirst as jest.Mock).mockResolvedValue({ id: 20 });
+
+      (prisma.testScenario.findFirst as jest.Mock).mockResolvedValue({
+        id: 30,
+      });
+
+      (prisma.feedback.update as jest.Mock).mockResolvedValue({
+        id: 1,
+        feature_id: 20,
+        test_scenario_id: 30,
+        project_id: 99,
+        user_id: 5,
+        priority: "high",
+        status: "open",
+        description: "Updated feedback",
+        created_at: "2025-01-01",
+        updated_at: "2025-01-02",
+      });
+
+      const response = await request(app)
+        .patch("/api/feedback-history/details/1")
+        .set(authHeader)
+        .send(validPayload);
+
+      expect(response.status).toBe(200);
+      expect(response.body.payload.message).toBe(
+        "Feedback successfully updated"
+      );
+
+      expect(prisma.feedback.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 1 },
+          data: expect.objectContaining({
+            description: "Updated feedback",
+            priority: "high",
+            status: "open",
+            feature: { connect: { id: 20 } },
+            testScenario: { connect: { id: 30 } },
+          }),
+        })
+      );
     });
   });
 });

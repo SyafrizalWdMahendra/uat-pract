@@ -3,7 +3,8 @@ import app from "../../../app.js";
 import { prisma } from "../../../prisma/client.js";
 import bcrypt from "bcrypt";
 
-// --- Mocking Dependencies ---
+process.env.JWT_SECRET = "secret-test-key-yang-aman";
+
 jest.mock("../../../prisma/client", () => ({
   prisma: {
     user: {
@@ -18,13 +19,24 @@ jest.mock("bcrypt", () => ({
   compare: jest.fn(),
 }));
 
-// --- Setup ---
-process.env.JWT_SECRET = "secret-test-key-yang-aman";
+jest.mock("jsonwebtoken", () => ({
+  sign: jest.fn(() => "test-token"),
+}));
+
+jest.mock("jose", () => {
+  return {
+    SignJWT: jest.fn().mockImplementation(() => ({
+      setProtectedHeader: jest.fn().mockReturnThis(),
+      setIssuedAt: jest.fn().mockReturnThis(),
+      setExpirationTime: jest.fn().mockReturnThis(),
+      sign: jest.fn().mockResolvedValue("mocked-jwt-token"),
+    })),
+  };
+});
 
 const mockedPrisma = prisma as jest.Mocked<typeof prisma>;
 const mockedBcrypt = bcrypt as jest.Mocked<typeof bcrypt>;
 
-// --- Test Suites ---
 describe("Auth Endpoints", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -118,7 +130,8 @@ describe("Auth Endpoints", () => {
       expect(response.status).toBe(200);
       expect(response.body.payload.message).toBe("Login berhasil");
       expect(response.body.payload.data).toHaveProperty("token");
-      expect(typeof response.body.payload.data.token).toBe("string");
+      expect(response.body.payload.data.token).toBe("mocked-jwt-token");
+
       expect(mockedBcrypt.compare).toHaveBeenCalledWith(
         loginPayload.password,
         mockUser.password

@@ -41,7 +41,7 @@ describe("testing features", () => {
             : callback;
 
         if (cb) {
-          cb(null, userPayload as any);
+          cb(null, userPayload as unknown as jwt.JwtPayload);
           return;
         }
       }
@@ -108,32 +108,45 @@ describe("testing features", () => {
   // ==  TESTS FOR GET FEATURE ==
   // =================================================================
   describe("GET /api/features", () => {
-    const featurePayload = {
-      project_id: 1,
-      title: "Authentication",
-    };
+    const mockFeatures = [{ id: 1, project_id: 1, title: "Authentication" }];
 
-    test("should return 200 and all feature successfully", async () => {
-      (prisma.feature.findMany as jest.Mock).mockResolvedValue(featurePayload);
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
 
+    test("should return 200 when no projectId is provided", async () => {
       const response = await request(app)
         .get("/api/features")
         .set("Authorization", "Bearer dummy-token");
 
       expect(response.status).toBe(200);
+      expect(response.body.payload.message).toBe("No projectId provided");
+      expect(response.body.payload.data).toEqual([]);
+    });
+
+    test("should return 200 and features successfully retrieved", async () => {
+      (prisma.feature.findMany as jest.Mock).mockResolvedValue(mockFeatures);
+
+      const response = await request(app)
+        .get("/api/features?projectId=1")
+        .set("Authorization", "Bearer dummy-token");
+
+      expect(response.status).toBe(200);
       expect(response.body.payload.message).toBe(
-        "Feature successfully retrivied"
+        "Features successfully retrieved"
       );
+      expect(prisma.feature.findMany).toHaveBeenCalledWith({
+        where: { project_id: 1 },
+      });
     });
 
     test("should return 500 when a database error occurs", async () => {
-      const mockError = new Error("Database connection failed");
-      (prisma.feature.create as jest.Mock).mockRejectedValue(mockError);
+      const mockError = new Error("DB Error");
+      (prisma.feature.findMany as jest.Mock).mockRejectedValue(mockError);
 
       const response = await request(app)
-        .post("/api/features")
-        .set("Authorization", "Bearer dummy-token")
-        .send(featurePayload);
+        .get("/api/features?projectId=1")
+        .set("Authorization", "Bearer dummy-token");
 
       expect(response.status).toBe(500);
       expect(response.body).toEqual({

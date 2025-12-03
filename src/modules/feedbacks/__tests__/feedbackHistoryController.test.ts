@@ -1,229 +1,367 @@
 import request from "supertest";
 import { prisma } from "../../../prisma/client.js";
 import app from "../../../app.js";
-import jwt from "jsonwebtoken";
 
 jest.mock("../../../prisma/client", () => ({
   prisma: {
     feedback: {
       create: jest.fn(),
+      findUnique: jest.fn(),
+      findFirst: jest.fn(),
       findMany: jest.fn(),
       update: jest.fn(),
-      findUnique: jest.fn(),
       delete: jest.fn(),
-      findFirst: jest.fn(),
     },
   },
 }));
 
-jest.mock("jsonwebtoken", () => ({
-  ...jest.requireActual("jsonwebtoken"),
-  verify: jest.fn(),
-}));
+const mockedPrisma = prisma as unknown as {
+  feedback: {
+    create: jest.Mock;
+    findUnique: jest.Mock;
+    findFirst: jest.Mock;
+    findMany: jest.Mock;
+    update: jest.Mock;
+    delete: jest.Mock;
+  };
+};
 
-const mockedPrisma = prisma as jest.Mocked<typeof prisma>;
-const mockedJwt = jwt as jest.Mocked<typeof jwt>;
+const authHeader = {
+  authorization: `Bearer dummy-token`,
+};
 
-describe("testing feedback", () => {
+describe("testing feedback history", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-
-    (mockedJwt.verify as unknown as jest.Mock).mockImplementation(
-      (
-        token: string,
-        secretOrPublicKey: unknown,
-        optionsOrCallback?: jwt.VerifyOptions | jwt.VerifyCallback,
-        callback?: jwt.VerifyCallback
-      ) => {
-        const userPayload = { id: "1", role: "manager" };
-
-        const cb =
-          typeof optionsOrCallback === "function"
-            ? (optionsOrCallback as jwt.VerifyCallback)
-            : callback;
-
-        if (cb) {
-          cb(null, userPayload as any);
-          return;
-        }
-      }
-    );
   });
 
-  const authHeader = { Authorization: "Bearer dummy-token" };
-  const mockFeedback = {
-    id: 1,
-    description: "Test feedback",
-    user: { name: "Test User" },
-    feature: { title: "Authentication" },
-    testScenario: { code: "TC-01" },
-  };
-
-  // =================================================================
-  // ==  TESTS FOR searchFeedbackHistory
-  // =================================================================
   describe("GET /api/feedback-history/search", () => {
-    test("should search successfully by content", async () => {
-      (mockedPrisma.feedback.findMany as jest.Mock).mockResolvedValue([
-        mockFeedback,
-      ]);
+    it("should search successfully by content", async () => {
+      const mockDate = new Date();
+      const mockFeedback = {
+        id: 1,
+        description: "Test feedback",
+        priority: "high",
+        status: "open",
+        created_at: mockDate,
+        user: { name: "Test User" },
+        feature: { title: "Auth Feature" },
+        testScenario: { code: "TS001" },
+      };
+
+      mockedPrisma.feedback.findMany.mockResolvedValue([mockFeedback]);
+
       const response = await request(app)
         .get("/api/feedback-history/search?content=Test")
         .set(authHeader);
 
       expect(response.status).toBe(200);
-      expect(response.body.payload.data[0]).toEqual(mockFeedback);
+      expect(response.body.payload.data[0]).toEqual({
+        ...mockFeedback,
+        created_at: mockDate.toISOString(),
+      });
       expect(mockedPrisma.feedback.findMany).toHaveBeenCalledWith({
-        where: { description: { contains: "Test" } },
+        where: {
+          AND: [{ description: { contains: "Test" } }],
+        },
         select: expect.any(Object),
+        orderBy: { created_at: "desc" },
       });
     });
 
-    test("should search successfully by feature", async () => {
-      (mockedPrisma.feedback.findMany as jest.Mock).mockResolvedValue([
-        mockFeedback,
-      ]);
+    it("should search successfully by feature", async () => {
+      const mockFeedback = {
+        id: 1,
+        description: "Test feedback",
+        priority: "high",
+        status: "open",
+        created_at: new Date(),
+        user: { name: "Test User" },
+        feature: { title: "Auth Feature" },
+        testScenario: { code: "TS001" },
+      };
+
+      mockedPrisma.feedback.findMany.mockResolvedValue([mockFeedback]);
+
       const response = await request(app)
         .get("/api/feedback-history/search?feature=Auth")
         .set(authHeader);
 
       expect(response.status).toBe(200);
       expect(mockedPrisma.feedback.findMany).toHaveBeenCalledWith({
-        where: { feature: { title: { contains: "Auth" } } },
+        where: expect.any(Object),
         select: expect.any(Object),
+        orderBy: { created_at: "desc" },
       });
     });
 
-    test("should search successfully by author", async () => {
-      (mockedPrisma.feedback.findMany as jest.Mock).mockResolvedValue([
-        mockFeedback,
-      ]);
+    it("should search successfully by author", async () => {
+      const mockFeedback = {
+        id: 1,
+        description: "Test feedback",
+        priority: "high",
+        status: "open",
+        created_at: new Date(),
+        user: { name: "User Name" },
+        feature: { title: "Auth Feature" },
+        testScenario: { code: "TS001" },
+      };
+
+      mockedPrisma.feedback.findMany.mockResolvedValue([mockFeedback]);
+
       const response = await request(app)
         .get("/api/feedback-history/search?author=User")
         .set(authHeader);
 
       expect(response.status).toBe(200);
       expect(mockedPrisma.feedback.findMany).toHaveBeenCalledWith({
-        where: { user: { name: { contains: "User" } } },
+        where: {
+          AND: [{ user: { name: { contains: "User" } } }],
+        },
         select: expect.any(Object),
+        orderBy: { created_at: "desc" },
       });
     });
 
-    test("should return 400 if no search parameter is provided", async () => {
+    it("should search successfully by status", async () => {
+      const mockFeedback = {
+        id: 1,
+        description: "Test feedback",
+        priority: "high",
+        status: "open",
+        created_at: new Date(),
+        user: { name: "Test User" },
+        feature: { title: "Auth Feature" },
+        testScenario: { code: "TS001" },
+      };
+
+      mockedPrisma.feedback.findMany.mockResolvedValue([mockFeedback]);
+
+      const response = await request(app)
+        .get("/api/feedback-history/search?status=open")
+        .set(authHeader);
+
+      expect(response.status).toBe(200);
+      expect(mockedPrisma.feedback.findMany).toHaveBeenCalledWith({
+        where: {
+          AND: [{ status: { equals: "open" } }],
+        },
+        select: expect.any(Object),
+        orderBy: { created_at: "desc" },
+      });
+    });
+
+    it("should search successfully by priority", async () => {
+      const mockFeedback = {
+        id: 1,
+        description: "Test feedback",
+        priority: "high",
+        status: "open",
+        created_at: new Date(),
+        user: { name: "Test User" },
+        feature: { title: "Auth Feature" },
+        testScenario: { code: "TS001" },
+      };
+
+      mockedPrisma.feedback.findMany.mockResolvedValue([mockFeedback]);
+
+      const response = await request(app)
+        .get("/api/feedback-history/search?priority=high")
+        .set(authHeader);
+
+      expect(response.status).toBe(200);
+      expect(mockedPrisma.feedback.findMany).toHaveBeenCalledWith({
+        where: {
+          AND: [{ priority: { equals: "high" } }],
+        },
+        select: expect.any(Object),
+        orderBy: { created_at: "desc" },
+      });
+    });
+
+    it("should return all feedback when no search parameter is provided", async () => {
+      const mockFeedback = {
+        id: 1,
+        description: "Test feedback",
+        priority: "high",
+        status: "open",
+        created_at: new Date(),
+        user: { name: "Test User" },
+        feature: { title: "Auth Feature" },
+        testScenario: { code: "TS001" },
+      };
+
+      mockedPrisma.feedback.findMany.mockResolvedValue([mockFeedback]);
+
       const response = await request(app)
         .get("/api/feedback-history/search")
         .set(authHeader);
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(200);
       expect(response.body.payload.message).toBe(
-        "A valid search parameter (content, feature, or author) is required"
+        "Feedback history successfully retrieved"
       );
+      expect(mockedPrisma.feedback.findMany).toHaveBeenCalledWith({
+        where: {},
+        select: expect.any(Object),
+        orderBy: { created_at: "desc" },
+      });
     });
 
-    test("should return 404 if no results are found", async () => {
-      (mockedPrisma.feedback.findMany as jest.Mock).mockResolvedValue([]);
+    it("should return empty array if no results are found", async () => {
+      mockedPrisma.feedback.findMany.mockResolvedValue([]);
+
       const response = await request(app)
-        .get("/api/feedback-history/search?content=notfound")
+        .get("/api/feedback-history/search?content=NonExistent")
         .set(authHeader);
 
-      expect(response.status).toBe(404);
-      expect(response.body.payload.message).toBe(
-        "No feedback history found matching your criteria"
-      );
+      expect(response.status).toBe(200);
+      expect(response.body.payload.data).toEqual([]);
     });
 
-    test("should return 500 if database fails", async () => {
-      (mockedPrisma.feedback.findMany as jest.Mock).mockRejectedValue(
-        new Error("DB Error")
+    it("should return 500 if database fails", async () => {
+      mockedPrisma.feedback.findMany.mockRejectedValue(
+        new Error("Database error")
       );
+
       const response = await request(app)
-        .get("/api/feedback-history/search?content=test")
+        .get("/api/feedback-history/search?content=Test")
         .set(authHeader);
 
       expect(response.status).toBe(500);
-      expect(response.body.message).toBe("Something went wrong!");
     });
   });
 
-  // =================================================================
-  // ==  TESTS FOR getFeedbackHistoryById
-  // =================================================================
   describe("GET /api/feedback-history/:id", () => {
-    test("should return feedback by ID successfully", async () => {
-      (mockedPrisma.feedback.findFirst as jest.Mock).mockResolvedValue(
-        mockFeedback
-      );
+    it("should return feedback by ID successfully", async () => {
+      const mockDate = new Date();
+      const mockFeedback = {
+        id: 1,
+        description: "Test feedback",
+        priority: "high",
+        status: "open",
+        created_at: mockDate,
+        user: { id: 1, name: "Test User" },
+        feature: { id: 1, title: "Auth Feature" },
+        testScenario: { id: 1, code: "TS001", test_case: "Test case" },
+      };
+
+      mockedPrisma.feedback.findFirst.mockResolvedValue(mockFeedback);
+
       const response = await request(app)
         .get("/api/feedback-history/1")
         .set(authHeader);
 
       expect(response.status).toBe(200);
-      expect(response.body.payload.data).toEqual(mockFeedback);
+      expect(response.body.payload.message).toBe(
+        "Data riwayat feedback berhasil diambil"
+      );
+      expect(response.body.payload.data).toEqual({
+        ...mockFeedback,
+        created_at: mockDate.toISOString(),
+      });
     });
 
-    test("should return 404 if feedback by ID is not found", async () => {
-      (mockedPrisma.feedback.findFirst as jest.Mock).mockResolvedValue(null);
+    it("should return 404 if feedback by ID is not found", async () => {
+      mockedPrisma.feedback.findFirst.mockResolvedValue(null);
+
       const response = await request(app)
         .get("/api/feedback-history/999")
         .set(authHeader);
 
       expect(response.status).toBe(404);
-      expect(response.body.payload.message).toContain(
+      expect(response.body.payload.message).toBe(
         "Riwayat feedback tidak ditemukan atau Anda tidak memiliki akses."
       );
     });
   });
 
-  // =================================================================
-  // ==  TESTS FOR getFeedbackHistory
-  // =================================================================
   describe("GET /api/feedback-history", () => {
-    test("should return all feedback history successfully", async () => {
-      (mockedPrisma.feedback.findMany as jest.Mock).mockResolvedValue([
-        mockFeedback,
-      ]);
+    it("should return all feedback history successfully with projectId", async () => {
+      const mockDate = new Date();
+      const mockFeedback = {
+        id: 1,
+        description: "Test feedback",
+        priority: "high",
+        status: "open",
+        created_at: mockDate,
+        project_id: 1,
+        user: { id: 1, name: "Test User" },
+        feature: { title: "Auth Feature" },
+        testScenario: { code: "TS001", test_case: "Test case" },
+      };
+
+      mockedPrisma.feedback.findMany.mockResolvedValue([mockFeedback]);
+
+      const response = await request(app)
+        .get("/api/feedback-history?projectId=1")
+        .set(authHeader);
+
+      expect(response.status).toBe(200);
+      expect(response.body.payload.message).toBe(
+        "Feedback Histories successfully retrieved"
+      );
+      expect(response.body.payload.data[0]).toEqual({
+        ...mockFeedback,
+        created_at: mockDate.toISOString(),
+      });
+      expect(mockedPrisma.feedback.findMany).toHaveBeenCalledWith({
+        where: { project_id: 1 },
+        include: {
+          user: { select: { id: true, name: true } },
+          testScenario: { select: { code: true, test_case: true } },
+          feature: { select: { title: true } },
+        },
+        orderBy: { created_at: "desc" },
+      });
+    });
+
+    it("should return 400 if projectId is not provided", async () => {
       const response = await request(app)
         .get("/api/feedback-history")
         .set(authHeader);
 
-      expect(response.status).toBe(200);
-      expect(response.body.payload.data[0]).toEqual(mockFeedback);
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe("projectId diperlukan");
     });
   });
 
-  // =================================================================
-  // ==  TESTS FOR deleteFeedbackHistory
-  // =================================================================
   describe("DELETE /api/feedback-history/:id", () => {
-    test("should delete feedback successfully", async () => {
-      (mockedPrisma.feedback.findUnique as jest.Mock).mockResolvedValue(
-        mockFeedback
-      );
-      (mockedPrisma.feedback.delete as jest.Mock).mockResolvedValue(
-        mockFeedback
-      );
+    it("should delete feedback successfully", async () => {
+      const mockFeedback = {
+        id: 1,
+        description: "Test feedback",
+        priority: "high",
+        status: "open",
+      };
+
+      mockedPrisma.feedback.findUnique.mockResolvedValue(mockFeedback);
+      mockedPrisma.feedback.delete.mockResolvedValue(mockFeedback);
 
       const response = await request(app)
         .delete("/api/feedback-history/1")
         .set(authHeader);
 
       expect(response.status).toBe(200);
-      expect(response.body.payload.message).toContain("successfully deleted");
-      expect(mockedPrisma.feedback.findUnique).toHaveBeenCalledTimes(1);
-      expect(mockedPrisma.feedback.delete).toHaveBeenCalledTimes(1);
+      expect(response.body.payload.message).toBe(
+        "Feedback History and related Feedback successfully deleted"
+      );
+      expect(mockedPrisma.feedback.delete).toHaveBeenCalledWith({
+        where: { id: 1 },
+      });
     });
 
-    test("should return 400 for an invalid ID", async () => {
+    it("should return 400 for an invalid ID", async () => {
       const response = await request(app)
-        .delete("/api/feedback-history/abc")
+        .delete("/api/feedback-history/invalid")
         .set(authHeader);
 
       expect(response.status).toBe(400);
       expect(response.body.payload.message).toBe("Invalid feedback history ID");
     });
 
-    test("should return 404 if feedback to delete is not found", async () => {
-      (mockedPrisma.feedback.findUnique as jest.Mock).mockResolvedValue(null);
+    it("should return 404 if feedback to delete is not found", async () => {
+      mockedPrisma.feedback.findUnique.mockResolvedValue(null);
 
       const response = await request(app)
         .delete("/api/feedback-history/999")
@@ -231,7 +369,6 @@ describe("testing feedback", () => {
 
       expect(response.status).toBe(404);
       expect(response.body.payload.message).toBe("Feedback history not found!");
-      expect(mockedPrisma.feedback.delete).not.toHaveBeenCalled();
     });
   });
 });

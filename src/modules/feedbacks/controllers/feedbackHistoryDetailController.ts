@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { updateDetailsSchema } from "../dto/feedbackDetailUpdateDto.js";
 import { responses } from "../../../utils/responses.js";
 import { prisma } from "../../../prisma/client.js";
+import { FeedbackPriority, FeedbackStatus, Prisma } from "@prisma/client";
 
 const getFeedHistoryDetails = async (req: Request, res: Response) => {
   const feedHistoryId = Number(req.params.id);
@@ -23,25 +24,9 @@ const getFeedHistoryDetails = async (req: Request, res: Response) => {
       priority: true,
       created_at: true,
       updated_at: true,
-      user: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-      testScenario: {
-        select: {
-          id: true,
-          code: true,
-          test_case: true,
-        },
-      },
-      feature: {
-        select: {
-          id: true,
-          title: true,
-        },
-      },
+      user: { select: { id: true, name: true } },
+      testScenario: { select: { id: true, code: true, test_case: true } },
+      feature: { select: { id: true, title: true } },
     },
   });
 
@@ -90,17 +75,18 @@ const updateFeedHistoryDetails = async (req: Request, res: Response) => {
     return responses(res, 404, "Feedback not found!", null);
   }
 
-  const updateData: any = {};
+  // Typed update object
+  const updateData: Prisma.FeedbackUpdateInput = {};
 
-  if (feedback_priority !== undefined && feedback_priority !== null) {
-    updateData.priority = feedback_priority;
+  if (feedback_priority !== undefined) {
+    updateData.priority = feedback_priority as FeedbackPriority;
   }
 
-  if (feedback_status !== undefined && feedback_status !== null) {
-    updateData.status = feedback_status;
+  if (feedback_status !== undefined) {
+    updateData.status = feedback_status as FeedbackStatus;
   }
 
-  if (feedback_description !== undefined && feedback_description !== null) {
+  if (feedback_description !== undefined) {
     updateData.description = feedback_description;
   }
 
@@ -122,14 +108,18 @@ const updateFeedHistoryDetails = async (req: Request, res: Response) => {
       );
     }
 
-    updateData.feature_id = feature.id;
+    updateData.feature = { connect: { id: feature.id } };
   }
 
-  if (test_scenario_code || test_scenario_test_case) {
-    const targetFeatureId =
-      (updateData.feature_id as number) || existingFeedback.feature_id;
+  const hasScenarioUpdate =
+    (test_scenario_code && test_scenario_code.trim() !== "") ||
+    (test_scenario_test_case && test_scenario_test_case.trim() !== "");
 
-    const whereClause: any = {
+  if (hasScenarioUpdate) {
+    const targetFeatureId =
+      Number(updateData.feature) || existingFeedback.feature_id;
+
+    const whereClause: Prisma.TestScenarioWhereInput = {
       feature_id: targetFeatureId,
     };
 
@@ -154,7 +144,7 @@ const updateFeedHistoryDetails = async (req: Request, res: Response) => {
       );
     }
 
-    updateData.test_scenario_id = testScenario.id;
+    updateData.testScenario = { connect: { id: testScenario.id } };
   }
 
   if (Object.keys(updateData).length === 0) {
@@ -175,25 +165,9 @@ const updateFeedHistoryDetails = async (req: Request, res: Response) => {
       priority: true,
       created_at: true,
       updated_at: true,
-      user: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-      testScenario: {
-        select: {
-          id: true,
-          code: true,
-          test_case: true,
-        },
-      },
-      feature: {
-        select: {
-          id: true,
-          title: true,
-        },
-      },
+      user: { select: { id: true, name: true } },
+      testScenario: { select: { id: true, code: true, test_case: true } },
+      feature: { select: { id: true, title: true } },
     },
   });
 

@@ -41,7 +41,7 @@ describe("testing feedback", () => {
             : callback;
 
         if (cb) {
-          cb(null, userPayload as any);
+          cb(null, userPayload as unknown as jwt.JwtPayload);
           return;
         }
       }

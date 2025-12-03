@@ -1,5 +1,10 @@
 import { Router } from "express";
-import { searchFeedbackHistory, getFeedbackHistory, getFeedbackHistoryById, deleteFeedbackHistory, } from "../../modules/feedbacks/controllers/feedbackHistoryController.js";
+import {
+  searchFeedbackHistory,
+  getFeedbackHistory,
+  getFeedbackHistoryById,
+  deleteFeedbackHistory,
+} from "../../modules/feedbacks/controllers/feedbackHistoryController.js";
 const router = Router();
 router.get("/feedback-history/search", searchFeedbackHistory);
 router.get("/feedback-history/:id", getFeedbackHistoryById);

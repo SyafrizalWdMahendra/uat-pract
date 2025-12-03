@@ -7,11 +7,6 @@ const authenticateToken = async (
   res: Response,
   next: NextFunction
 ) => {
-  console.log("====== Incoming Request Headers ======");
-  console.log("Authorization Header:", req.headers["authorization"]);
-  console.log("All Headers:", req.headers);
-  console.log("=====================================");
-
   const secretKey = process.env.JWT_SECRET;
 
   if (!secretKey) {

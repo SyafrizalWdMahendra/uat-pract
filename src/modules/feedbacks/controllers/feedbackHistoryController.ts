@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { responses } from "../../../utils/responses.js";
 import { prisma } from "../../../prisma/client.js";
+import { FeedbackPriority, FeedbackStatus, Prisma } from "@prisma/client";
 
 const searchFeedbackHistory = async (req: Request, res: Response) => {
   const { content, feature, author, status, priority } = req.query;
@@ -28,24 +29,22 @@ const searchFeedbackHistory = async (req: Request, res: Response) => {
     },
   };
 
-  let whereClause: any = {
-    AND: [],
-  };
+  const andClauses: Prisma.FeedbackWhereInput[] = [];
 
   if (content) {
-    whereClause.AND.push({
+    andClauses.push({
       description: { contains: String(content) },
     });
   }
 
-  if (feature) {
-    whereClause.AND.push({
-      featureId: { equals: String(feature) },
+  if (feature && !isNaN(Number(feature))) {
+    andClauses.push({
+      feature_id: { equals: Number(feature) },
     });
   }
 
   if (author) {
-    whereClause.AND.push({
+    andClauses.push({
       user: {
         name: { contains: String(author) },
       },
@@ -53,20 +52,19 @@ const searchFeedbackHistory = async (req: Request, res: Response) => {
   }
 
   if (status) {
-    whereClause.AND.push({
-      status: { equals: String(status) },
+    andClauses.push({
+      status: { equals: status as FeedbackStatus },
     });
   }
 
   if (priority) {
-    whereClause.AND.push({
-      priority: { equals: String(priority) },
+    andClauses.push({
+      priority: { equals: priority as FeedbackPriority },
     });
   }
 
-  if (whereClause.AND.length === 0) {
-    whereClause = {};
-  }
+  const whereClause: Prisma.FeedbackWhereInput =
+    andClauses.length > 0 ? { AND: andClauses } : {};
 
   const searchResult = await prisma.feedback.findMany({
     where: whereClause,

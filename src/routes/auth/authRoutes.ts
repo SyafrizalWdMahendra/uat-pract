@@ -2,7 +2,7 @@ import { Router } from "express";
 import {
   register,
   login,
-  googleLogin
+  googleLogin,
 } from "../../modules/auth/controllers/authControllers.js";
 import {
   deleteUser,
